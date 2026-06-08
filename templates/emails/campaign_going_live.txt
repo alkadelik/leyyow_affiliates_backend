@@ -1,0 +1,21 @@
+Campaign goes live tomorrow — {{ campaign_name }}
+==================================================
+
+This is a reminder that the {{ campaign_name }} campaign is scheduled to go live tomorrow, {{ start_date_display }}.
+
+CAMPAIGN DETAILS
+Campaign:            {{ campaign_name }}
+Start date:          {{ start_date_display }}
+End condition:       {% if end_date_display and end_volume_display %}{{ end_date_display }} or {{ end_volume_display }}{% elif end_date_display %}{{ end_date_display }}{% elif end_volume_display %}{{ end_volume_display }}{% else %}Until cancelled{% endif %}
+Affiliates assigned: {{ affiliate_count }}
+Commission type:     {{ commission_display }}
+
+Review the campaign:
+{{ campaign_url }}
+
+Note: This reminder is sent to Leyyow admin only. Affiliates are notified separately when the campaign becomes active.
+
+---
+Leyyow Admin
+Sent to {{ recipient_email }}.
+© {% now "Y" %} Leyyow

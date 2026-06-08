@@ -1,0 +1,77 @@
+{% extends "emails/base_email.html" %}
+
+{# Context variables expected:
+   - first_name    : str  — affiliate's first name
+   - dashboard_url : str  — full URL to affiliate dashboard
+#}
+
+{% block subject %}Welcome to Leyyow Affiliates — your account is active{% endblock %}
+
+{% block hero %}
+<tr>
+  <td style="background-color:#FFEECD;padding:32px 32px 24px;border-bottom:1px solid #F0D8A0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+      <tr>
+        <td style="width:48px;height:48px;background-color:#FEAA00;border-radius:14px;text-align:center;vertical-align:middle;">
+          <span style="font-size:22px;line-height:48px;">✓</span>
+        </td>
+      </tr>
+    </table>
+    <h1 style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#14110E;margin:0 0 8px;line-height:1.25;">Welcome to Leyyow Affiliates</h1>
+    <p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#462C1F;margin:0;line-height:1.6;">Your account is active. You're ready to start referring merchants and earning commissions.</p>
+  </td>
+</tr>
+{% endblock %}
+
+{% block body %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 14px;">Hi <strong style="color:#14110E;">{{ first_name }}</strong>,</p>
+
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 20px;">
+  Your Leyyow affiliate account is now active. You'll be added to campaigns by the Leyyow team — you'll receive an email as soon as a campaign is ready and your tracking link and coupon code are assigned.
+</p>
+
+<!-- Stats grid (2 col table) -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td width="48%" style="background-color:#FFEECD;border-radius:8px;padding:14px 16px;vertical-align:top;">
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 4px;">Your wallet balance</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:20px;font-weight:700;color:#14110E;margin:0 0 2px;">₦0</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;margin:0;">Earnings appear here</p>
+    </td>
+    <td width="4%"></td>
+    <td width="48%" style="background-color:#FFEECD;border-radius:8px;padding:14px 16px;vertical-align:top;">
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 4px;">Minimum payout</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:20px;font-weight:700;color:#14110E;margin:0 0 2px;">₦50,000</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;margin:0;">To request a withdrawal</p>
+    </td>
+  </tr>
+</table>
+
+<!-- CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="border-radius:8px;background-color:#FEAA00;">
+      <a href="{{ dashboard_url }}"
+         style="display:inline-block;font-family:'Outfit',Arial,sans-serif;font-size:14px;font-weight:600;color:#14110E;text-decoration:none;padding:13px 28px;border-radius:8px;">
+        Go to my dashboard →
+      </a>
+    </td>
+  </tr>
+</table>
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;line-height:1.6;margin:0;">
+  Questions? Reply to this email and the Leyyow team will get back to you.
+</p>
+{% endblock %}
+
+{% block footer_extra %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:12px;color:#6B6560;margin:0 0 4px;line-height:1.6;">
+  Sent to <a href="mailto:{{ recipient_email }}" style="color:#DF7B00;text-decoration:none;">{{ recipient_email }}</a> ·
+  <a href="#" style="color:#DF7B00;text-decoration:none;">Unsubscribe</a>
+</p>
+{% endblock %}

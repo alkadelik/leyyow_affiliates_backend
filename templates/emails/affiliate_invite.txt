@@ -1,0 +1,18 @@
+You've been invited to join Leyyow Affiliates
+==============================================
+
+Hi {{ first_name }},
+
+The Leyyow team has invited you to join their affiliate programme. As an affiliate, you'll earn a commission every time a merchant you refer completes a subscription payment.
+
+Your account has been created with this email address. Click the link below to set your password and activate your account.
+
+Activate your account:
+{{ activate_url }}
+
+This link expires in 24 hours. If you weren't expecting this invite, you can safely ignore this email.
+
+---
+Leyyow Affiliates
+This invite was sent to {{ recipient_email }}.
+© {% now "Y" %} Leyyow

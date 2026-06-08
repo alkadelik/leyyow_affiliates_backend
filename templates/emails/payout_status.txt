@@ -1,0 +1,30 @@
+{% if status == 'paid' %}Your Leyyow payout has been paid — {{ gross_amount_display }}
+{% elif status == 'cancelled' %}Your Leyyow payout request has been cancelled
+{% else %}Your Leyyow payout request has been approved{% endif %}
+=======================================================================
+
+Hi {{ first_name }},
+
+{% if status == 'cancelled' %}Your payout request of {{ gross_amount_display }} has been cancelled. The full amount has been returned to your wallet balance. No fee has been charged.
+
+If you believe this is an error, please reply to this email.
+{% else %}{% if status == 'paid' %}Your payout request has been approved and marked as paid.{% else %}Your payout request has been approved and will be processed shortly.{% endif %}
+
+PAYOUT DETAILS
+Payout amount:  {{ gross_amount_display }}
+Transfer fee:   {{ fee_display }}
+Net received:   {{ net_amount_display }}
+Bank:           {{ bank_name }} ****{{ account_last4 }}
+Date:           {{ date_display }}
+Status:         {% if status == 'paid' %}Paid{% else %}Approved — processing{% endif %}
+
+{% if status == 'paid' %}Bank transfers typically arrive within 1–2 business days. If you have not received your payment after 3 business days, please reply to this email.
+{% else %}You'll receive another email once your payment has been marked as paid.{% endif %}{% endif %}
+
+View your payout history:
+{{ payout_url }}
+
+---
+Leyyow Affiliates
+Questions about this payout? Reply to this email.
+© {% now "Y" %} Leyyow

@@ -1,0 +1,27 @@
+Your Leyyow earnings update — {{ digest_date_display }}
+========================================================
+
+Hi {{ first_name }},
+
+Here's what happened on your campaigns today.
+
+EARNED TODAY
+{{ earned_today_display }}
+
+TODAY'S COMMISSIONS
+{% for c in commissions %}{{ c.merchant_name }} · {{ c.campaign_name }}  +{{ c.amount_display }}
+{% endfor %}
+
+RUNNING TOTALS
+Wallet balance:           {{ wallet_balance_display }}
+Minimum payout threshold: {{ payout_threshold_display }}
+{% if above_threshold %}Your balance has reached the payout threshold. You can request a withdrawal.
+{% else %}Remaining to threshold:   {{ remaining_display }}{% endif %}
+
+View your full earnings:
+{{ earnings_url }}
+
+---
+Leyyow Affiliates
+You receive one digest per day when there is activity.
+© {% now "Y" %} Leyyow

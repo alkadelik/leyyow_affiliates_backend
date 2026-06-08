@@ -1,0 +1,108 @@
+{% extends "emails/base_email.html" %}
+
+{# Context variables expected:
+   - campaign_name      : str
+   - campaign_url       : str  — admin portal campaign detail URL
+   - start_date_display : str  — e.g. "1 July 2025"
+   - end_date_display   : str  — formatted, or empty string
+   - end_volume_display : str  — e.g. "100 conversions", or empty string
+   - affiliate_count    : int
+   - commission_display : str  — e.g. "Flat fee — ₦15,000 per conversion"
+#}
+
+{% block subject %}Campaign going live tomorrow — {{ campaign_name }}{% endblock %}
+
+{% block hero %}
+<tr>
+  <td style="background-color:#FFEECD;padding:32px 32px 24px;border-bottom:1px solid #F0D8A0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+      <tr>
+        <td style="width:48px;height:48px;background-color:#FEAA00;border-radius:14px;text-align:center;vertical-align:middle;">
+          <span style="font-size:22px;line-height:48px;">🕐</span>
+        </td>
+      </tr>
+    </table>
+    <h1 style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#14110E;margin:0 0 8px;line-height:1.25;">Campaign goes live tomorrow</h1>
+    <p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#462C1F;margin:0;line-height:1.6;">
+      <strong>{{ campaign_name }}</strong> starts on {{ start_date_display }}. Final checks before it launches.
+    </p>
+  </td>
+</tr>
+{% endblock %}
+
+{% block body %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 20px;">
+  This is a reminder that the <strong style="color:#14110E;">{{ campaign_name }}</strong> campaign is scheduled to go live <strong style="color:#14110E;">tomorrow, {{ start_date_display }}</strong>.
+</p>
+
+<!-- Campaign details table -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+  <tr style="background-color:#F5F0E8;">
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:left;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;" width="40%">Detail</th>
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:left;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;">Value</th>
+  </tr>
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;padding:10px 12px;border-bottom:1px solid #F0EAE0;">Campaign</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#14110E;font-weight:500;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ campaign_name }}</td>
+  </tr>
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;padding:10px 12px;border-bottom:1px solid #F0EAE0;">Start date</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ start_date_display }}</td>
+  </tr>
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;padding:10px 12px;border-bottom:1px solid #F0EAE0;">End condition</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;border-bottom:1px solid #F0EAE0;">
+      {% if end_date_display and end_volume_display %}{{ end_date_display }} or {{ end_volume_display }}
+      {% elif end_date_display %}{{ end_date_display }}
+      {% elif end_volume_display %}{{ end_volume_display }}
+      {% else %}Until cancelled{% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;padding:10px 12px;border-bottom:1px solid #F0EAE0;">Affiliates assigned</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ affiliate_count }}</td>
+  </tr>
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;padding:10px 12px;">Commission type</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;">{{ commission_display }}</td>
+  </tr>
+</table>
+
+<!-- CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="border-radius:8px;background-color:#FEAA00;">
+      <a href="{{ campaign_url }}"
+         style="display:inline-block;font-family:'Outfit',Arial,sans-serif;font-size:14px;font-weight:600;color:#14110E;text-decoration:none;padding:13px 28px;border-radius:8px;">
+        Review campaign →
+      </a>
+    </td>
+  </tr>
+</table>
+
+<!-- Info callout -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="background-color:#FFEECD;border-radius:8px;padding:16px 20px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:8px;">
+        <tr>
+          <td style="width:6px;height:6px;background-color:#FEAA00;border-radius:50%;vertical-align:top;padding-top:5px;"></td>
+          <td style="padding-left:10px;font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#462C1F;line-height:1.5;">This reminder is sent to Leyyow admin only</td>
+        </tr>
+      </table>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="width:6px;height:6px;background-color:#FEAA00;border-radius:50%;vertical-align:top;padding-top:5px;"></td>
+          <td style="padding-left:10px;font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#462C1F;line-height:1.5;">Affiliates are notified separately when the campaign becomes active</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block footer_extra %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:12px;color:#6B6560;margin:0 0 4px;line-height:1.6;">
+  Sent to <a href="mailto:{{ recipient_email }}" style="color:#DF7B00;text-decoration:none;">{{ recipient_email }}</a> · Campaign management notifications
+</p>
+{% endblock %}

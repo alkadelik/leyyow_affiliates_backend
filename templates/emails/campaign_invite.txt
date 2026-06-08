@@ -1,0 +1,27 @@
+You've been added to a campaign — {{ campaign_name }}
+======================================================
+
+Hi {{ first_name }},
+
+You've been added to the {{ campaign_name }} campaign. Here are your referral tools.
+
+YOUR COUPON CODE
+{{ coupon_code }}
+Share this code with merchants at signup.
+
+YOUR TRACKING LINK
+{{ tracking_url }}
+
+CAMPAIGN DETAILS
+Campaign:    {{ campaign_name }}
+Commission:  {{ commission_display }}
+Ends:        {% if end_date and end_volume %}{{ end_date }} or {{ end_volume }}{% elif end_date %}{{ end_date }}{% elif end_volume %}{{ end_volume }}{% else %}Until cancelled{% endif %}
+
+View campaign details:
+{{ campaign_url }}
+
+Commission is paid on confirmed subscription payments only.
+
+---
+Leyyow Affiliates
+© {% now "Y" %} Leyyow

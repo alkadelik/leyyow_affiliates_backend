@@ -1,0 +1,25 @@
+Campaign ended — your {{ campaign_name }} summary
+==================================================
+
+Hi {{ first_name }},
+
+The {{ campaign_name }} campaign ended on {{ end_date_display }}. Here's how you did.
+
+RESULTS
+Total earned:      {{ total_earned_display }}
+Conversions:       {{ conversion_count }}{% if conversion_rate %}
+Conversion rate:   {{ conversion_rate }}{% endif %}
+
+{% if commissions %}
+COMMISSION BREAKDOWN
+{% for c in commissions %}{{ c.date_display }}  {{ c.merchant_name }}  {{ c.amount_display }}
+{% endfor %}{% endif %}
+
+Your earnings have been added to your wallet. Once your balance reaches ₦50,000, you can request a payout.
+
+View your wallet:
+{{ wallet_url }}
+
+---
+Leyyow Affiliates
+© {% now "Y" %} Leyyow

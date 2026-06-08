@@ -1,0 +1,102 @@
+{% extends "emails/base_email.html" %}
+
+{# Context variables expected:
+   - first_name        : str  — affiliate's first name
+   - campaign_name     : str
+   - campaign_url      : str  — affiliate portal campaign detail URL
+   - coupon_code       : str  — e.g. AMARA-7K2X
+   - tracking_url      : str  — full tracking link
+   - commission_display: str  — human-readable, e.g. "₦15,000 per subscription" or "10% of payment"
+   - end_date          : str  — formatted, e.g. "30 September 2025" (empty string if no date end)
+   - end_volume        : str  — e.g. "100 conversions" (empty string if no volume end)
+#}
+
+{% block subject %}You've been added to a Leyyow campaign — {{ campaign_name }}{% endblock %}
+
+{% block hero %}
+<tr>
+  <td style="background-color:#FFEECD;padding:32px 32px 24px;border-bottom:1px solid #F0D8A0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+      <tr>
+        <td style="width:48px;height:48px;background-color:#FEAA00;border-radius:14px;text-align:center;vertical-align:middle;">
+          <span style="font-size:22px;line-height:48px;">📣</span>
+        </td>
+      </tr>
+    </table>
+    <h1 style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#14110E;margin:0 0 8px;line-height:1.25;">You've been added to a campaign</h1>
+    <p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#462C1F;margin:0;line-height:1.6;">Your tracking link and coupon code are ready. Start referring merchants now.</p>
+  </td>
+</tr>
+{% endblock %}
+
+{% block body %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 14px;">Hi <strong style="color:#14110E;">{{ first_name }}</strong>,</p>
+
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 20px;">
+  You've been added to the <strong style="color:#14110E;">{{ campaign_name }}</strong> campaign. Here are your referral tools:
+</p>
+
+<!-- Referral tools box -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td style="background-color:#FFEECD;border-radius:8px;padding:20px 20px;">
+
+      <!-- Coupon code label -->
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 8px;">Your coupon code</p>
+
+      <!-- Code display block -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+        <tr>
+          <td style="background-color:#14110E;border-radius:8px;padding:16px 20px;text-align:center;">
+            <p style="font-family:'Courier New',Courier,monospace;font-size:26px;font-weight:700;color:#FEAA00;letter-spacing:0.12em;margin:0 0 6px;">{{ coupon_code }}</p>
+            <p style="font-family:'Outfit',Arial,sans-serif;font-size:12px;color:#888888;margin:0;">Share this code with merchants</p>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Tracking link label -->
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 6px;">Your tracking link</p>
+      <p style="font-family:'Courier New',Courier,monospace;font-size:12px;color:#DF7B00;word-break:break-all;background-color:#F5F0E8;padding:10px 14px;border-radius:6px;margin:0;">{{ tracking_url }}</p>
+
+    </td>
+  </tr>
+</table>
+
+<!-- Campaign details table -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+  <tr style="background-color:#F5F0E8;">
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:left;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;">Campaign</th>
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:left;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;">Commission</th>
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:left;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;">Ends</th>
+  </tr>
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ campaign_name }}</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ commission_display }}</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;border-bottom:1px solid #F0EAE0;">
+      {% if end_date and end_volume %}{{ end_date }} or {{ end_volume }}
+      {% elif end_date %}{{ end_date }}
+      {% elif end_volume %}{{ end_volume }}
+      {% else %}Until cancelled{% endif %}
+    </td>
+  </tr>
+</table>
+
+<!-- CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="border-radius:8px;background-color:#FEAA00;">
+      <a href="{{ campaign_url }}"
+         style="display:inline-block;font-family:'Outfit',Arial,sans-serif;font-size:14px;font-weight:600;color:#14110E;text-decoration:none;padding:13px 28px;border-radius:8px;">
+        View campaign details →
+      </a>
+    </td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block footer_extra %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:12px;color:#6B6560;margin:0 0 4px;line-height:1.6;">
+  Commission is paid on confirmed subscription payments only. ·
+  <a href="#" style="color:#DF7B00;text-decoration:none;">Unsubscribe</a>
+</p>
+{% endblock %}

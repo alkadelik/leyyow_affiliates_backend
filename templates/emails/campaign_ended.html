@@ -1,0 +1,108 @@
+{% extends "emails/base_email.html" %}
+
+{# Context variables expected:
+   - first_name         : str
+   - campaign_name      : str
+   - end_date_display   : str  — e.g. "30 September 2025"
+   - total_earned_display: str — e.g. "₦90,000"
+   - conversion_count   : int
+   - conversion_rate    : str — e.g. "62%" (pre-formatted) or empty string
+   - commissions        : list of dicts:
+       { merchant_name, date_display, amount_display }
+   - wallet_url         : str  — affiliate portal wallet URL
+#}
+
+{% block subject %}Campaign ended — your {{ campaign_name }} summary{% endblock %}
+
+{% block hero %}
+<tr>
+  <td style="background-color:#FFEECD;padding:32px 32px 24px;border-bottom:1px solid #F0D8A0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+      <tr>
+        <td style="width:48px;height:48px;background-color:#FEAA00;border-radius:14px;text-align:center;vertical-align:middle;">
+          <span style="font-size:22px;line-height:48px;">🏁</span>
+        </td>
+      </tr>
+    </table>
+    <h1 style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#14110E;margin:0 0 8px;line-height:1.25;">Campaign has ended — here's your summary</h1>
+    <p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#462C1F;margin:0;line-height:1.6;">{{ campaign_name }} is complete. Your final commission tally is below.</p>
+  </td>
+</tr>
+{% endblock %}
+
+{% block body %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 14px;">Hi <strong style="color:#14110E;">{{ first_name }}</strong>,</p>
+
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 20px;">
+  The <strong style="color:#14110E;">{{ campaign_name }}</strong> campaign ended on {{ end_date_display }}. Here's how you did:
+</p>
+
+<!-- Stats grid -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+  <tr>
+    <td width="48%" style="background-color:#FFEECD;border-radius:8px;padding:14px 16px;vertical-align:top;">
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 4px;">Total earned</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:20px;font-weight:700;color:#14110E;margin:0 0 2px;">{{ total_earned_display }}</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;margin:0;">{{ conversion_count }} conversion{{ conversion_count|pluralize }}</p>
+    </td>
+    <td width="4%"></td>
+    <td width="48%" style="background-color:#FFEECD;border-radius:8px;padding:14px 16px;vertical-align:top;">
+      {% if conversion_rate %}
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 4px;">Conversion rate</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:20px;font-weight:700;color:#14110E;margin:0 0 2px;">{{ conversion_rate }}</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;margin:0;">From your referrals</p>
+      {% else %}
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 4px;">Campaign</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;font-weight:500;color:#14110E;margin:0 0 2px;">{{ campaign_name }}</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;margin:0;">Ended {{ end_date_display }}</p>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+{% if commissions %}
+<!-- Commission table -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+  <tr style="background-color:#F5F0E8;">
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:left;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;">Merchant</th>
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:left;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;">Date</th>
+    <th style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-align:right;padding:8px 12px;text-transform:uppercase;letter-spacing:0.03em;border-bottom:1px solid #E8D8C0;">Commission</th>
+  </tr>
+  {% for c in commissions %}
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ c.merchant_name }}</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ c.date_display }}</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#14110E;font-weight:500;text-align:right;padding:10px 12px;border-bottom:1px solid #F0EAE0;">{{ c.amount_display }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 20px;">
+  Your earnings have been added to your wallet. Once your balance reaches ₦50,000, you can request a payout.
+</p>
+
+<!-- CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="border-radius:8px;background-color:#FEAA00;">
+      <a href="{{ wallet_url }}"
+         style="display:inline-block;font-family:'Outfit',Arial,sans-serif;font-size:14px;font-weight:600;color:#14110E;text-decoration:none;padding:13px 28px;border-radius:8px;">
+        View wallet balance →
+      </a>
+    </td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block footer_extra %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:12px;color:#6B6560;margin:0 0 4px;line-height:1.6;">
+  <a href="#" style="color:#DF7B00;text-decoration:none;">View full earnings history</a> ·
+  <a href="#" style="color:#DF7B00;text-decoration:none;">Unsubscribe</a>
+</p>
+{% endblock %}

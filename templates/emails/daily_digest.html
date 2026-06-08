@@ -1,0 +1,127 @@
+{% extends "emails/base_email.html" %}
+
+{# Context variables expected:
+   - first_name           : str
+   - digest_date_display  : str  — e.g. "Wednesday, 18 June 2025"
+   - commission_count     : int  — number of commissions earned today
+   - earned_today_display : str  — e.g. "₦30,000"
+   - commissions          : list of dicts:
+       { merchant_name, campaign_name, amount_display }
+   - wallet_balance_display  : str — e.g. "₦45,000"
+   - payout_threshold_display: str — e.g. "₦50,000"
+   - remaining_display       : str — e.g. "₦5,000" (empty if already above threshold)
+   - above_threshold         : bool — True if wallet >= payout threshold
+   - earnings_url            : str
+#}
+
+{% block subject %}Your Leyyow earnings update — {{ digest_date_display }}{% endblock %}
+
+{% block hero %}
+<tr>
+  <td style="background-color:#FFEECD;padding:32px 32px 24px;border-bottom:1px solid #F0D8A0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+      <tr>
+        <td style="width:48px;height:48px;background-color:#FEAA00;border-radius:14px;text-align:center;vertical-align:middle;">
+          <span style="font-size:22px;line-height:48px;">📊</span>
+        </td>
+      </tr>
+    </table>
+    <h1 style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#14110E;margin:0 0 8px;line-height:1.25;">Your daily earnings update</h1>
+    <p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#462C1F;margin:0;line-height:1.6;">
+      {{ digest_date_display }} · {{ commission_count }} new commission{{ commission_count|pluralize }} earned today
+    </p>
+  </td>
+</tr>
+{% endblock %}
+
+{% block body %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 20px;">
+  Hi <strong style="color:#14110E;">{{ first_name }}</strong>, here's what happened on your campaigns today.
+</p>
+
+<!-- Big earned today number -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px;">
+  <tr>
+    <td style="text-align:center;padding:16px 0 8px;">
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;margin:0 0 4px;">Earned today</p>
+      <p style="font-family:'Outfit',Arial,sans-serif;font-size:30px;font-weight:700;color:#14110E;margin:0;">+ {{ earned_today_display }}</p>
+    </td>
+  </tr>
+</table>
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 12px;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<!-- Today's commissions -->
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 10px;">Today's commissions</p>
+
+{% for c in commissions %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="border-bottom:1px solid #F0EAE0;{% if forloop.last %}border-bottom:none;{% endif %}">
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 0;">
+      {{ c.merchant_name }} · <span style="color:#6B6560;">{{ c.campaign_name }}</span>
+    </td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;font-weight:600;color:#085041;text-align:right;padding:10px 0;white-space:nowrap;">
+      +{{ c.amount_display }}
+    </td>
+  </tr>
+</table>
+{% endfor %}
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 12px;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<!-- Running totals -->
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 10px;">Running totals</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr style="border-bottom:1px solid #F0EAE0;">
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 0;">Wallet balance</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;font-weight:600;color:#14110E;text-align:right;padding:10px 0;">{{ wallet_balance_display }}</td>
+  </tr>
+  <tr style="border-bottom:1px solid #F0EAE0;">
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 0;">Minimum payout threshold</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;text-align:right;padding:10px 0;">{{ payout_threshold_display }}</td>
+  </tr>
+  {% if above_threshold %}
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#085041;font-weight:500;padding:10px 0;">✓ You can request a payout</td>
+    <td></td>
+  </tr>
+  {% else %}
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:10px 0;">Remaining to threshold</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;text-align:right;padding:10px 0;">{{ remaining_display }}</td>
+  </tr>
+  {% endif %}
+</table>
+
+<!-- Divider -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<!-- CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="border-radius:8px;background-color:#FEAA00;">
+      <a href="{{ earnings_url }}"
+         style="display:inline-block;font-family:'Outfit',Arial,sans-serif;font-size:14px;font-weight:600;color:#14110E;text-decoration:none;padding:13px 28px;border-radius:8px;">
+        View full earnings →
+      </a>
+    </td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block footer_extra %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:12px;color:#6B6560;margin:0 0 4px;line-height:1.6;">
+  You receive one digest per day when there is activity. No activity = no email. ·
+  <a href="#" style="color:#DF7B00;text-decoration:none;">Unsubscribe</a>
+</p>
+{% endblock %}
