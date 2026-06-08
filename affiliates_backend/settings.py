@@ -12,7 +12,7 @@ LEYYOW_INTERNAL_SECRET_KEY = config('LEYYOW_INTERNAL_SECRET_KEY', default='')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'b59c-102-88-55-231.ngrok-free.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'b59c-102-88-55-231.ngrok-free.app', 'leyyowaffiliatesbackend-production.up.railway.app']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
