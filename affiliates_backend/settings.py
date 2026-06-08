@@ -51,6 +51,11 @@ CSRF_TRUSTED_ORIGINS = [
     "https://leyyow-affiliates.vercel.app",
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    "https://leyyow-affiliates-admin-git-main-alkadeliks-projects.vercel.app",
+    "https://leyyow-affiliates.vercel.app",
+]
+
 ROOT_URLCONF = 'affiliates_backend.urls'
 
 
