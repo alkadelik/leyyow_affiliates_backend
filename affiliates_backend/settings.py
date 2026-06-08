@@ -1,6 +1,6 @@
 from pathlib import Path
 from decouple import config
-import dj_database_url
+from urllib.parse import urlparse
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -68,25 +68,33 @@ WSGI_APPLICATION = 'affiliates_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         # 'ENGINE': 'django.db.backends.sqlite3',
-#         # 'NAME': BASE_DIR / 'db.sqlite3',
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'leyyow_affiliate',
-#         'USER': 'postgres', # your postgres username
-#         'PASSWORD': 'your_password',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
-
-# For use on Railway
-DATABASES = {
-  "default": dj_database_url.config(
-    default=os.getenv('DATABASE_URL')
-    )
-  }
+DATABASE_URL = os.config('DATABASE_URL')
+if DATABASE_URL:
+    # For use on Railway
+    db = urlparse(DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db.path[1:],
+            'USER': db.username,
+            'PASSWORD': db.password,
+            'HOST': db.hostname,
+            'PORT': db.port or 5432,
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            # 'ENGINE': 'django.db.backends.sqlite3',
+            # 'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'leyyow_affiliate',
+            'USER': 'postgres', # your postgres username
+            'PASSWORD': 'your_password',
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 
 
 # Password validation
