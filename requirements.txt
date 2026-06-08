@@ -10,4 +10,4 @@ psycopg[binary]
 python-decouple==3.6
 redis==5.2.0
 requests==2.28.0
-dj_database_url
+whitenoise==6.5.0
