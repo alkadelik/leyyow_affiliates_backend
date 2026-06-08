@@ -68,7 +68,7 @@ WSGI_APPLICATION = 'affiliates_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.config('DATABASE_URL')
+DATABASE_URL = config('DATABASE_URL')
 if DATABASE_URL:
     # For use on Railway
     db = urlparse(DATABASE_URL)
