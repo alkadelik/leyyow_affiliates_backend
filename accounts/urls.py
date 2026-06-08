@@ -32,7 +32,7 @@ from accounts.views import (
 
 urlpatterns = [
     # Admin auth
-    path('admin/auth/login/', AdminLoginView.as_view(), name='admin-login'),
+    path('adminn/auth/login/', AdminLoginView.as_view(), name='admin-login'),
     path('admin/auth/logout/', AdminLogoutView.as_view(), name='admin-logout'),
     path('admin/auth/me/', AdminMeView.as_view(), name='admin-me'),
     path('admin/auth/forgot-password/', AdminForgotPasswordView.as_view(), name='admin-forgot-password'),
