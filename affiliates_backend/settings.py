@@ -52,7 +52,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "https://leyyow-affiliates-admin.vercel.app/login",
+    "https://leyyow-affiliates-admin.vercel.app",
     "https://leyyow-affiliates.vercel.app",
 ]
 
