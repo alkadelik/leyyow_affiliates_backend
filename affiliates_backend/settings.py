@@ -83,10 +83,10 @@ WSGI_APPLICATION = 'affiliates_backend.wsgi.application'
 
 # For use on Railway
 DATABASES = {
-    "default": dj_database_url.parse(
-        os.environ["DATABASE_URL"]
+  "default": dj_database_url.config(
+    default=os.getenv('DATABASE_URL')
     )
-}
+  }
 
 
 # Password validation
@@ -155,7 +155,7 @@ PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
 
 ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default='http://localhost:5173')
 AFFILIATE_FRONTEND_URL = config('AFFILIATE_FRONTEND_URL', default='http://localhost:5174')
-TRACKING_BASE_URL   = config('TRACKING_BASE_URL', default='http://localhost:8000')
+TRACKING_BASE_URL = config('TRACKING_BASE_URL', default='http://localhost:8000')
 CAMPAIGN_LANDING_URL = config('CAMPAIGN_LANDING_URL', default='https://leyyow.com')
 
 # Email settings
@@ -169,10 +169,10 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 
 # Celery
-CELERY_BROKER_URL         = 'redis://127.0.0.1:6379/0'
-CELERY_RESULT_BACKEND     = 'django-db'
-CELERY_ACCEPT_CONTENT     = ['json']
-CELERY_TASK_SERIALIZER    = 'json'
+CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER  = 'json'
-CELERY_TIMEZONE           = TIME_ZONE
+CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
