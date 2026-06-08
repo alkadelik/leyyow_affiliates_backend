@@ -46,6 +46,7 @@ MIDDLEWARE = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
+    "https://leyyow-affiliates-admin-git-main-alkadeliks-projects.vercel.app",
     "https://leyyowaffiliatesbackend-production.up.railway.app",
     "https://leyyow-affiliates-admin.vercel.app",
     "https://leyyow-affiliates.vercel.app",
@@ -55,6 +56,12 @@ CORS_ALLOWED_ORIGINS = [
     "https://leyyow-affiliates-admin.vercel.app",
     "https://leyyow-affiliates.vercel.app",
 ]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'affiliates_backend.urls'
 
