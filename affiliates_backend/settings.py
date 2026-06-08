@@ -12,7 +12,7 @@ LEYYOW_INTERNAL_SECRET_KEY = config('LEYYOW_INTERNAL_SECRET_KEY', default='')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'b59c-102-88-55-231.ngrok-free.app', 'leyyowaffiliatesbackend-production.up.railway.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'b59c-102-88-55-231.ngrok-free.app', 'leyyowaffiliatesbackend-production.up.railway.app', '.vercel.app',]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -35,12 +35,20 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://leyyowaffiliatesbackend-production.up.railway.app",
+    "https://leyyow-affiliates-admin.vercel.app",
+    "https://leyyow-affiliates.vercel.app",
 ]
 
 ROOT_URLCONF = 'affiliates_backend.urls'
@@ -184,3 +192,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER  = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
+
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
