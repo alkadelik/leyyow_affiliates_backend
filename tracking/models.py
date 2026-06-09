@@ -200,6 +200,7 @@ class CentralWallet(models.Model):
 
 class MerchantLead(models.Model):
     STATUS_CHOICES = [
+        ('trial',      'Trial'),
         ('signed_up',  'Signed Up'),
         ('subscribed', 'Subscribed'),
         ('expired',    'Expired'),
@@ -224,11 +225,14 @@ class MerchantLead(models.Model):
     )
     merchant_id = models.CharField(max_length=128, unique=True)
     merchant_name = models.CharField(max_length=255)
-    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='signed_up')
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='trial')
     subscription_tier = models.CharField(max_length=32, null=True, blank=True)
     subscription_start = models.DateTimeField(null=True, blank=True)
     subscription_end = models.DateTimeField(null=True, blank=True)
     amount_paid_kobo = models.IntegerField(null=True, blank=True)
+    total_amount_paid_kobo = models.IntegerField(default=0)
+    first_subscribed_at = models.DateTimeField(null=True, blank=True)
+    first_subscription_tier = models.CharField(max_length=32, null=True, blank=True)
     signed_up_at = models.DateTimeField()
     updated_at = models.DateTimeField(auto_now=True)
 

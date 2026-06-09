@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 
 from tracking.models import AffiliateLink, AffiliateCode
+from accounts.models import SystemSettings
 
 
 def _send(subject, to_email, template_name, context):
@@ -63,7 +64,8 @@ def send_campaign_invite(affiliate, campaign):
 
     try:
         link = AffiliateLink.objects.get(affiliate=affiliate, campaign=campaign)
-        tracking_url = f"{settings.TRACKING_BASE_URL}/r/{link.slug}"
+        _base = SystemSettings.get().tracking_base_url or getattr(settings, 'TRACKING_BASE_URL', 'https://leyyow.com')
+        tracking_url = f"{_base.rstrip('/')}/r/{link.slug}"
     except AffiliateLink.DoesNotExist:
         tracking_url = ''
 

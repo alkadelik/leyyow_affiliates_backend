@@ -25,9 +25,10 @@ from accounts.views import (
     AffiliateCommissionListView,
     AffiliateMerchantListView,
     AffiliateMerchantDetailView,
-    AffiliateTokenRefreshView, 
+    AffiliateTokenRefreshView,
     AdminTokenRefreshView,
     AffiliateCampaignHistoryView,
+    SystemSettingsView,
 )
 
 urlpatterns = [
@@ -68,4 +69,7 @@ urlpatterns = [
     # Affiliate Merchants
     path('affiliate/merchants/', AffiliateMerchantListView.as_view(),   name='affiliate-merchants'),
     path('affiliate/merchants/<str:merchant_id>/', AffiliateMerchantDetailView.as_view(), name='affiliate-merchant-detail'),
+
+    # Admin Settings
+    path('admin/settings/', SystemSettingsView.as_view(), name='admin-settings'),
 ]

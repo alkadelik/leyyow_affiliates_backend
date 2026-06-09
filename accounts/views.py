@@ -17,7 +17,7 @@ from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from accounts.backends import AffiliateJWTAuthentication
-from accounts.models import Admin, Affiliate, AffiliateWallet, AffiliateTokenBlacklist
+from accounts.models import Admin, Affiliate, AffiliateWallet, AffiliateTokenBlacklist, SystemSettings
 from accounts.serializers import (
     AdminSerializer,
     LoginSerializer,
@@ -1150,3 +1150,32 @@ class AffiliateCampaignHistoryView(APIView):
             })
 
         return Response({'count': len(data), 'results': data})
+
+
+class SystemSettingsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAnyAdmin]
+
+    def get(self, request):
+        s = SystemSettings.get()
+        return Response({
+            'payout_auto_approve':     s.payout_auto_approve,
+            'minimum_withdrawal_kobo': s.minimum_withdrawal_kobo,
+            'tracking_base_url':       s.tracking_base_url,
+        })
+
+    def patch(self, request):
+        s = SystemSettings.get()
+        allowed = {'payout_auto_approve', 'minimum_withdrawal_kobo', 'tracking_base_url'}
+        fields_to_save = []
+        for field in allowed:
+            if field in request.data:
+                setattr(s, field, request.data[field])
+                fields_to_save.append(field)
+        if fields_to_save:
+            s.save(update_fields=fields_to_save)
+        return Response({
+            'payout_auto_approve':     s.payout_auto_approve,
+            'minimum_withdrawal_kobo': s.minimum_withdrawal_kobo,
+            'tracking_base_url':       s.tracking_base_url,
+        })

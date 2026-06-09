@@ -190,9 +190,10 @@ class AffiliateWalletView(APIView):
             })
 
         return Response({
-            'balance':         wallet.balance,
-            'total_earned':    wallet.total_earned,
-            'total_withdrawn': wallet.total_withdrawn,
+            'balance':                  wallet.balance,
+            'total_earned':             wallet.total_earned,
+            'total_withdrawn':          wallet.total_withdrawn,
+            'minimum_withdrawal_kobo':  SystemSettings.get().minimum_withdrawal_kobo,
         })
 
 
@@ -243,9 +244,10 @@ class PayoutRequestListView(APIView):
             )
 
         # Minimum payout check
-        if requested_amount < MINIMUM_PAYOUT:
+        minimum_payout = SystemSettings.get().minimum_withdrawal_kobo
+        if requested_amount < minimum_payout:
             return Response(
-                {'detail': f'Minimum payout amount is ₦{MINIMUM_PAYOUT / 100:,.2f}.'},
+                {'detail': f'Minimum payout amount is ₦{minimum_payout / 100:,.2f}.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

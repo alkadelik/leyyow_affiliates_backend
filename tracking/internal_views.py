@@ -56,7 +56,7 @@ class MerchantSignupView(APIView):
             campaign=campaign,
             merchant_id=merchant_id,
             merchant_name=merchant_name,
-            status='signed_up',
+            status='trial',
             signed_up_at=signed_up_at,
         )
 
@@ -92,7 +92,7 @@ class MerchantSubscriptionView(APIView):
             return Response({'error': 'merchant_id, event_type and occurred_at are required'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if event_type not in ('subscribed', 'renewed', 'expired', 'cancelled'):
+        if event_type not in ('subscribed', 'renewed', 'expired', 'cancelled', 'trial_ended'):
             return Response({'error': 'Invalid event_type'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -109,6 +109,14 @@ class MerchantSubscriptionView(APIView):
             lead.subscription_start = subscription_start or lead.subscription_start
             lead.subscription_end   = subscription_end or lead.subscription_end
             lead.amount_paid_kobo   = amount_paid_kobo or lead.amount_paid_kobo
+
+            if event_type in ('subscribed', 'renewed') and amount_paid_kobo:
+                lead.total_amount_paid_kobo += amount_paid_kobo
+
+            if event_type in ('subscribed', 'renewed') and lead.first_subscribed_at is None:
+                lead.first_subscribed_at     = occurred_at
+                lead.first_subscription_tier = subscription_tier
+
             lead.save()
 
             commission_created = False
@@ -221,8 +229,9 @@ class MerchantLeadInternalListView(APIView):
 
 def _map_event_to_status(event_type):
     return {
-        'subscribed': 'subscribed',
-        'renewed':    'subscribed',
-        'expired':    'expired',
-        'cancelled':  'cancelled',
+        'subscribed':   'subscribed',
+        'renewed':      'subscribed',
+        'expired':      'expired',
+        'cancelled':    'cancelled',
+        'trial_ended':  'signed_up',
     }[event_type]

@@ -8,6 +8,7 @@ from tracking.views import (
     AdminConversionListView,
     AdminCommissionListView,
     MerchantLeadListView,
+    MerchantLeadDetailView,
 )
 from tracking.internal_views import MerchantSignupView, MerchantSubscriptionView, MerchantLeadInternalListView
 
@@ -30,4 +31,6 @@ urlpatterns = [
     path('internal/merchant-subscription/', MerchantSubscriptionView.as_view(), name='merchant-subscription'),
     path('internal/merchant-leads/', MerchantLeadInternalListView.as_view(), name='internal-merchant-leads'),
     path('admin/tracking/merchant-leads/', MerchantLeadListView.as_view(), name='merchant-leads'),
+    path('admin/merchants/', MerchantLeadListView.as_view(), name='admin-merchants'),
+    path('admin/merchants/<str:merchant_id>/', MerchantLeadDetailView.as_view(), name='admin-merchant-detail'),
 ]

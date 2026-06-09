@@ -83,7 +83,9 @@ class GenerateLinkAndCodeView(APIView):
             return Response({'detail': 'Link already generated for this assignment.'}, status=status.HTTP_400_BAD_REQUEST)
 
         slug     = attribution.generate_slug()
-        full_url = f"{getattr(settings, 'TRACKING_BASE_URL', 'https://leyyow.com')}/r/{slug}/"
+        from accounts.models import SystemSettings as _SS
+        _base = _SS.get().tracking_base_url or getattr(settings, 'TRACKING_BASE_URL', 'https://leyyow.com')
+        full_url = f"{_base.rstrip('/')}/r/{slug}/"
         code     = attribution.generate_code(ca.affiliate)
 
         with transaction.atomic():
@@ -324,8 +326,11 @@ class MerchantLeadListView(APIView):
     permission_classes     = [IsAnyAdmin]
 
     def get(self, request):
+        from django.db.models import Count
         leads = MerchantLead.objects.select_related(
             'affiliate', 'campaign', 'affiliate_code'
+        ).annotate(
+            subscription_count=Count('conversions')
         ).order_by('-signed_up_at')
 
         campaign_id = request.query_params.get('campaign')
@@ -353,8 +358,60 @@ class MerchantLeadListView(APIView):
                 'subscription_end':   lead.subscription_end,
                 'subscription_tier':  lead.subscription_tier,
                 'status':             lead.status,
+                'subscription_count': lead.subscription_count,
             }
             for lead in leads
         ]
 
         return Response({'count': leads.count(), 'results': data})
+
+
+class MerchantLeadDetailView(APIView):
+    """Single merchant lead detail — admin side."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes     = [IsAnyAdmin]
+
+    def get(self, request, merchant_id):
+        try:
+            lead = MerchantLead.objects.select_related(
+                'affiliate', 'campaign', 'affiliate_code'
+            ).get(merchant_id=merchant_id)
+        except MerchantLead.DoesNotExist:
+            return Response({'detail': 'Merchant not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        commissions = Commission.objects.filter(
+            affiliate=lead.affiliate, conversion__lead=lead
+        ).select_related('conversion').order_by('-earned_at')
+
+        commission_rows = [
+            {
+                'id':            str(c.id),
+                'amount':        c.amount,
+                'status':        c.status,
+                'earned_at':     c.earned_at,
+                'event_type':    c.conversion.merchant_subscription_id,
+            }
+            for c in commissions
+        ]
+
+        return Response({
+            'id':                      str(lead.id),
+            'merchant_id':             lead.merchant_id,
+            'merchant_name':           lead.merchant_name,
+            'status':                  lead.status,
+            'affiliate_id':            str(lead.affiliate.id),
+            'affiliate_name':          lead.affiliate.full_name,
+            'campaign_id':             str(lead.campaign.id),
+            'campaign_name':           lead.campaign.name,
+            'affiliate_code':          lead.affiliate_code.code if lead.affiliate_code else None,
+            'subscription_tier':       lead.subscription_tier,
+            'subscription_start':      lead.subscription_start,
+            'subscription_end':        lead.subscription_end,
+            'amount_paid_kobo':        lead.amount_paid_kobo,
+            'total_amount_paid_kobo':  lead.total_amount_paid_kobo,
+            'first_subscribed_at':     lead.first_subscribed_at,
+            'first_subscription_tier': lead.first_subscription_tier,
+            'signed_up_at':            lead.signed_up_at,
+            'updated_at':              lead.updated_at,
+            'commissions':             commission_rows,
+        })

@@ -19,7 +19,7 @@ from campaigns.serializers import (
     RemoveAffiliateSerializer,
 )
 from campaigns import state_machine
-from accounts.models import Affiliate
+from accounts.models import Affiliate, SystemSettings
 from accounts.permissions import IsAnyAdmin
 from audit.utils import log_action
 from campaigns.task import (
@@ -309,7 +309,7 @@ class CampaignAffiliateView(APIView):
                 campaign = campaign,
                 affiliate = affiliate,
                 slug = slug,
-                full_url = f"{settings.TRACKING_BASE_URL}/r/{slug}",
+                full_url = f"{(SystemSettings.get().tracking_base_url or getattr(settings, 'TRACKING_BASE_URL', 'https://leyyow.com')).rstrip('/')}/r/{slug}",
             )
 
         if campaign.status in ('active', 'scheduled'):
