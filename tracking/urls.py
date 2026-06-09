@@ -9,7 +9,7 @@ from tracking.views import (
     AdminCommissionListView,
     MerchantLeadListView,
 )
-from tracking.internal_views import MerchantSignupView, MerchantSubscriptionView
+from tracking.internal_views import MerchantSignupView, MerchantSubscriptionView, MerchantLeadInternalListView
 
 urlpatterns = [
     # Public click tracking — stays at root, no api/ prefix
@@ -28,5 +28,6 @@ urlpatterns = [
     path('internal/commissions/<uuid:commission_id>/reverse/', ReverseCommissionView.as_view(), name='reverse-commission'),
     path('internal/merchant-signup/', MerchantSignupView.as_view(), name='merchant-signup'),
     path('internal/merchant-subscription/', MerchantSubscriptionView.as_view(), name='merchant-subscription'),
+    path('internal/merchant-leads/', MerchantLeadInternalListView.as_view(), name='internal-merchant-leads'),
     path('admin/tracking/merchant-leads/', MerchantLeadListView.as_view(), name='merchant-leads'),
 ]

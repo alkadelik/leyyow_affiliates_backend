@@ -342,6 +342,7 @@ class MerchantLeadListView(APIView):
 
         data = [
             {
+                'id':                 str(lead.id),
                 'merchant_id':        lead.merchant_id,
                 'merchant_name':      lead.merchant_name,
                 'affiliate_name':     lead.affiliate.full_name,

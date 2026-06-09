@@ -279,18 +279,22 @@ class AffiliateStatusView(APIView):
                 removed_at__isnull=True,
                 campaign__status='active',
             ).update(removed_at=now())
-            affiliate.status = 'inactive'
+            affiliate.status         = 'deactivated'
+            affiliate.deactivated_at = now()
+            affiliate.deactivated_by = request.user
+            affiliate.save(update_fields=['status', 'deactivated_at', 'deactivated_by'])
         else:
-            # Activate — check if they have any active campaign assignments
+            # Reactivate — clear deactivation fields, restore appropriate status
             from campaigns.models import CampaignAffiliate
             has_active_campaign = CampaignAffiliate.objects.filter(
                 affiliate=affiliate,
                 removed_at__isnull=True,
                 campaign__status='active',
             ).exists()
-            affiliate.status = 'active' if has_active_campaign else 'inactive'
-
-        affiliate.save(update_fields=['status'])
+            affiliate.status         = 'active' if has_active_campaign else 'inactive'
+            affiliate.deactivated_at = None
+            affiliate.deactivated_by = None
+            affiliate.save(update_fields=['status', 'deactivated_at', 'deactivated_by'])
 
         log_action(
             actor_type='admin', actor_id=request.user.id,
@@ -314,7 +318,7 @@ class ResendInviteView(APIView):
         if affiliate.status == 'active':
             return Response({'detail': 'Affiliate has already registered.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if affiliate.status == 'inactive':
+        if affiliate.status == 'deactivated':
             return Response({'detail': 'Cannot resend invite to a deactivated affiliate.'}, status=status.HTTP_400_BAD_REQUEST)
 
         raw_token    = secrets.token_hex(32)

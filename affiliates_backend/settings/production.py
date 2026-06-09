@@ -28,6 +28,7 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     'https://leyyow-affiliates-admin.vercel.app',
     'https://leyyow-affiliates.vercel.app',
+    'http://localhost:3000',
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -35,6 +36,8 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+AFFILIATE_FRONTEND_URL = config('AFFILIATE_FRONTEND_URL', default='https://leyyow-affiliates.vercel.app')
 
 EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {

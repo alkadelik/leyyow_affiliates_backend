@@ -1,8 +1,8 @@
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+from corsheaders.defaults import default_headers
 
-# settings/base.py is one level deeper than the old settings.py, so needs an extra .parent
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 AUTH_USER_MODEL = 'accounts.Admin'
@@ -112,6 +112,8 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + ['x-internal-api-key']
 
 ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default='http://localhost:5173')
 AFFILIATE_FRONTEND_URL = config('AFFILIATE_FRONTEND_URL', default='http://localhost:5174')

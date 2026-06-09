@@ -77,9 +77,10 @@ class AffiliateManager(BaseUserManager):
 
 class Affiliate(AbstractBaseUser):
     STATUS_CHOICES = [
-        ('invited', 'Invited'),
-        ('active', 'Active'),
-        ('inactive', 'Inactive'),
+        ('invited',      'Invited'),
+        ('active',       'Active'),
+        ('inactive',     'Inactive'),
+        ('deactivated',  'Deactivated'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

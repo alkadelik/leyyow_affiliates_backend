@@ -188,6 +188,37 @@ class MerchantSubscriptionView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class MerchantLeadInternalListView(APIView):
+    authentication_classes = []
+    permission_classes     = []
+
+    def get(self, request):
+        if not verify_internal_key(request):
+            return Response({'error': 'Unauthorised'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        leads = MerchantLead.objects.select_related(
+            'affiliate', 'campaign', 'affiliate_code'
+        ).order_by('-signed_up_at')
+
+        data = [
+            {
+                'id':                 str(lead.id),
+                'merchant_id':        lead.merchant_id,
+                'merchant_name':      lead.merchant_name,
+                'affiliate_name':     lead.affiliate.full_name,
+                'campaign_name':      lead.campaign.name,
+                'signed_up_at':       lead.signed_up_at,
+                'subscription_start': lead.subscription_start,
+                'subscription_end':   lead.subscription_end,
+                'subscription_tier':  lead.subscription_tier,
+                'status':             lead.status,
+            }
+            for lead in leads
+        ]
+
+        return Response({'count': len(data), 'results': data})
+
+
 def _map_event_to_status(event_type):
     return {
         'subscribed': 'subscribed',
