@@ -55,6 +55,8 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     "https://leyyow-affiliates-admin.vercel.app",
     "https://leyyow-affiliates.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -88,34 +90,43 @@ WSGI_APPLICATION = 'affiliates_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = config('DATABASE_URL')
-if DATABASE_URL:
-    # For use on Railway
-    db = urlparse(DATABASE_URL)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db.path[1:],
-            'USER': db.username,
-            'PASSWORD': db.password,
-            'HOST': db.hostname,
-            'PORT': db.port or 5432,
-        }
+# DATABASE_URL = config('DATABASE_URL')
+# if DATABASE_URL:
+#     # For use on Railway
+#     db = urlparse(DATABASE_URL)
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': db.path[1:],
+#             'USER': db.username,
+#             'PASSWORD': db.password,
+#             'HOST': db.hostname,
+#             'PORT': db.port or 5432,
+#         }
+#     }
+# else:
+#     DATABASES = {
+#         'default': {
+#             # 'ENGINE': 'django.db.backends.sqlite3',
+#             # 'NAME': BASE_DIR / 'db.sqlite3',
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'leyyow_affiliate',
+#             'USER': 'postgres', # your postgres username
+#             'PASSWORD': 'your_password',
+#             'HOST': 'localhost',
+#             'PORT': '5432',
+#         }
+#     }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'leyyow_affiliate',
+        'USER': 'postgres', # your postgres username
+        'PASSWORD': 'your_password',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
-else:
-    DATABASES = {
-        'default': {
-            # 'ENGINE': 'django.db.backends.sqlite3',
-            # 'NAME': BASE_DIR / 'db.sqlite3',
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'leyyow_affiliate',
-            'USER': 'postgres', # your postgres username
-            'PASSWORD': 'your_password',
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
-    }
-
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -205,5 +216,5 @@ CELERY_RESULT_SERIALIZER  = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 
-MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

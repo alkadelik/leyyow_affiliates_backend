@@ -32,12 +32,12 @@ from accounts.views import (
 
 urlpatterns = [
     # Admin auth
-    path('adm/auth/login/', AdminLoginView.as_view(), name='admin-login'),
-    path('adm/auth/logout/', AdminLogoutView.as_view(), name='admin-logout'),
-    path('adm/auth/me/', AdminMeView.as_view(), name='admin-me'),
-    path('adm/auth/forgot-password/', AdminForgotPasswordView.as_view(), name='admin-forgot-password'),
-    path('adm/auth/reset-password/', AdminResetPasswordView.as_view(),  name='admin-reset-password'),
-    path('adm/auth/token/refresh/', AdminTokenRefreshView.as_view(), name='admin-token-refresh'),
+    path('admin/auth/login/', AdminLoginView.as_view(), name='admin-login'),
+    path('admin/auth/logout/', AdminLogoutView.as_view(), name='admin-logout'),
+    path('admin/auth/me/', AdminMeView.as_view(), name='admin-me'),
+    path('admin/auth/forgot-password/', AdminForgotPasswordView.as_view(), name='admin-forgot-password'),
+    path('admin/auth/reset-password/', AdminResetPasswordView.as_view(),  name='admin-reset-password'),
+    path('admin/auth/token/refresh/', AdminTokenRefreshView.as_view(), name='admin-token-refresh'),
 
     # Admin managing affiliates
     path('admin/affiliates/create/', CreateAffiliateView.as_view(), name='affiliate-create'),
