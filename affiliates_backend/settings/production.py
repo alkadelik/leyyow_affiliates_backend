@@ -2,7 +2,7 @@ from .base import *
 from urllib.parse import urlparse
 from decouple import config
 
-DEBUG = False
+DEBUG = config('DEBUG')
 
 ALLOWED_HOSTS = ['leyyowaffiliatesbackend-production.up.railway.app']
 
