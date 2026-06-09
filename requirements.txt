@@ -1,5 +1,6 @@
 celery==5.4.0
 Django==5.2.13
+django-anymail[resend]
 djangorestframework==3.17.1
 djangorestframework-simplejwt==5.3.1
 django-celery-beat==2.8.1
@@ -10,4 +11,5 @@ psycopg[binary]
 python-decouple==3.6
 redis==5.2.0
 requests==2.28.0
+resend==2.30.1
 whitenoise==6.5.0
