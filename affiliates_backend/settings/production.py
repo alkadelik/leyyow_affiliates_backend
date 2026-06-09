@@ -37,7 +37,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-AFFILIATE_FRONTEND_URL = config('AFFILIATE_FRONTEND_URL', default='https://leyyow-affiliates.vercel.app')
+AFFILIATE_FRONTEND_URL = config('AFFILIATE_FRONTEND_URL')
 
 EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {
