@@ -36,15 +36,18 @@ from accounts.serializers import (
 )
 from accounts.permissions import IsAnyAdmin, IsAffiliate
 from accounts.task import task_send_affiliate_welcome, task_send_affiliate_invite
+from accounts.throttles import AuthRateThrottle, TokenRefreshRateThrottle
 from audit.utils import log_action
 from django.db.models import Sum
 from campaigns.models import CampaignAffiliate
 from tracking.models import AffiliateLink, AffiliateCode, Conversion, Commission, LinkClick, MerchantLead
 
+
 # ── Admin auth views ─────────────────────────────────────────────────────────
 
 class AdminLoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -110,6 +113,7 @@ class AdminMeView(APIView):
 
 class AdminForgotPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
@@ -144,6 +148,7 @@ class AdminForgotPasswordView(APIView):
 
 class AdminResetPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = ResetPasswordSerializer(data=request.data)
@@ -351,6 +356,7 @@ def get_affiliate_tokens(affiliate):
 
 class ValidateInviteView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def get(self, request):
         raw_token = request.query_params.get('token')
@@ -381,6 +387,7 @@ class ValidateInviteView(APIView):
 
 class AffiliateRegisterView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = AffiliateRegisterSerializer(data=request.data)
@@ -433,6 +440,7 @@ class AffiliateRegisterView(APIView):
 
 class AffiliateLoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = AffiliateLoginSerializer(data=request.data)
@@ -504,6 +512,7 @@ class AffiliateMeView(APIView):
 
 class AffiliateForgotPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = AffiliateForgotPasswordSerializer(data=request.data)
@@ -538,6 +547,7 @@ class AffiliateForgotPasswordView(APIView):
 
 class AffiliateResetPasswordView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
         serializer = AffiliateResetPasswordSerializer(data=request.data)
@@ -1059,6 +1069,7 @@ class AffiliateMerchantDetailView(APIView):
     
 
 class AffiliateTokenRefreshView(APIView):
+    throttle_classes = [TokenRefreshRateThrottle]
     authentication_classes = []
     permission_classes     = []
 
@@ -1077,6 +1088,7 @@ class AffiliateTokenRefreshView(APIView):
 
 
 class AdminTokenRefreshView(APIView):
+    throttle_classes = [TokenRefreshRateThrottle]
     authentication_classes = []
     permission_classes     = []
 

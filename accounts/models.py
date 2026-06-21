@@ -145,9 +145,10 @@ class AffiliateTokenBlacklist(models.Model):
         db_table = 'affiliate_token_blacklist'
 
 class SystemSettings(models.Model):
-    payout_auto_approve        = models.BooleanField(default=True)
-    minimum_withdrawal_kobo    = models.IntegerField(default=5000000)
-    tracking_base_url          = models.CharField(max_length=255, blank=True, default='')
+    payout_auto_approve = models.BooleanField(default=True)
+    minimum_withdrawal_kobo = models.IntegerField(default=5000000)
+    transfer_fee = models.IntegerField(default=10000)
+    tracking_base_url = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
         verbose_name = 'System Settings'

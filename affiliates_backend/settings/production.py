@@ -28,12 +28,12 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     'https://leyyow-affiliates-admin.vercel.app',
     'https://leyyow-affiliates.vercel.app',
-    'http://localhost:3000',
+    # 'http://localhost:3000',
 ]
 
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r'^https://.*\.vercel\.app$',
-]
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     r'^https://.*\.vercel\.app$',
+# ]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -47,3 +47,27 @@ ANYMAIL = {
 # Whitenoise — insert after SecurityMiddleware (index 0), before CorsMiddleware
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+# HTTPS security headers
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# In case Railway needs it
+# USE_X_FORWARDED_HOST = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': config('REDIS_URL'),
+    }
+}
+

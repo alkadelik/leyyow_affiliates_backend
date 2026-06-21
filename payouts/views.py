@@ -23,15 +23,14 @@ from payouts.task import task_send_payout_approved, task_send_payout_cancelled
 from accounts.models import AffiliateWallet, SystemSettings
 from accounts.permissions import IsAnyAdmin, IsAffiliate
 from accounts.backends import AffiliateJWTAuthentication
+from accounts.throttles import PayoutRateThrottle
 from tracking.models import CentralWallet, Commission
 from audit.utils import log_action
 from django.db import models as db_models
 
 import time
 
-TRANSFER_FEE   = 10000   # ₦100 in kobo
-MINIMUM_PAYOUT = 5000000  # ₦50,000 in kobo
-
+TRANSFER_FEE = SystemSettings.get().transfer_fee
 
 # ── Affiliate bank account views ──────────────────────────────────────────────
 
@@ -202,6 +201,7 @@ class AffiliateWalletView(APIView):
 class PayoutRequestListView(APIView):
     authentication_classes = [AffiliateJWTAuthentication]
     permission_classes     = [IsAffiliate]
+    throttle_classes = [PayoutRateThrottle]
 
     def get(self, request):
         payouts = PayoutRequest.objects.filter(affiliate=request.user)

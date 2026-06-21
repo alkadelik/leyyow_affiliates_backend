@@ -92,6 +92,13 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [],  # no global throttle
+    'DEFAULT_THROTTLE_RATES': {
+        'auth': '10/hour', # login, forgot-password, register
+        'payout': '5/hour', # payout requests
+        'token_refresh': '30/hour',
+    },
+    'NUM_PROXIES': 1, # In case Railway needs it
 }
 
 PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', default='')
