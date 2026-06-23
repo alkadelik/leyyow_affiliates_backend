@@ -22,11 +22,11 @@ class IsSuperAdmin(BasePermission):
 
 
 class IsAffiliate(BasePermission):
-    """Authenticated active affiliate."""
+    """Authenticated registered affiliate (any status except deactivated)."""
     def has_permission(self, request, view):
         from accounts.models import Affiliate
         return (
             request.user.is_authenticated
             and isinstance(request.user, Affiliate)
-            and request.user.status == 'active'
+            and request.user.status != 'deactivated'
         )
