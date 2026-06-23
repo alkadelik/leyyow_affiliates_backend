@@ -370,9 +370,6 @@ class ValidateInviteView(APIView):
         except Affiliate.DoesNotExist:
             return Response({'detail': 'Invalid invite link.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if affiliate.status == 'deactivated':
-            return Response({'detail': 'This account has been deactivated.'}, status=status.HTTP_403_FORBIDDEN)
-
         if affiliate.invite_expires_at < now():
             return Response({'detail': 'Invite link has expired. Please contact Leyyow.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -402,9 +399,6 @@ class AffiliateRegisterView(APIView):
             affiliate = Affiliate.objects.get(invite_token=hashed_token)
         except Affiliate.DoesNotExist:
             return Response({'detail': 'Invalid invite link.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if affiliate.status == 'deactivated':
-            return Response({'detail': 'This account has been deactivated.'}, status=status.HTTP_403_FORBIDDEN)
 
         if affiliate.invite_expires_at < now():
             return Response({'detail': 'Invite link has expired. Please contact Leyyow.'}, status=status.HTTP_400_BAD_REQUEST)
