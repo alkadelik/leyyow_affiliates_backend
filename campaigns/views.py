@@ -98,6 +98,37 @@ class CampaignListView(APIView):
             created_by           = request.user,
         )
 
+        affiliate_ids = request.data.get('affiliate_ids', [])
+        for affiliate_id in affiliate_ids:
+            try:
+                affiliate = Affiliate.objects.get(id=affiliate_id)
+            except Affiliate.DoesNotExist:
+                continue
+
+            ca = CampaignAffiliate.objects.create(
+                campaign=campaign,
+                affiliate=affiliate,
+                assigned_by=request.user,
+            )
+
+            if not AffiliateCode.objects.filter(campaign_affiliate=ca).exists():
+                AffiliateCode.objects.create(
+                    campaign_affiliate=ca,
+                    campaign=campaign,
+                    affiliate=affiliate,
+                    code=_generate_code(affiliate),
+                )
+
+            if not AffiliateLink.objects.filter(campaign_affiliate=ca).exists():
+                slug = _generate_slug()
+                AffiliateLink.objects.create(
+                    campaign_affiliate=ca,
+                    campaign=campaign,
+                    affiliate=affiliate,
+                    slug=slug,
+                    full_url=f"{(SystemSettings.get().tracking_base_url or getattr(settings, 'TRACKING_BASE_URL', 'https://leyyow.com')).rstrip('/')}/r/{slug}",
+                )
+
         log_action(
             actor_type='admin', actor_id=request.user.id,
             action='campaign.created', entity_type='campaign',
@@ -315,7 +346,7 @@ class CampaignAffiliateView(APIView):
         if campaign.status in ('active', 'scheduled'):
             affiliate.status = 'active'
             affiliate.save(update_fields=['status'])
-            task_send_campaign_invite.delay(str(affiliate.id), campaign)
+            task_send_campaign_invite.delay(str(affiliate.id), str(campaign.id))
 
         log_action(
             actor_type='admin', actor_id=request.user.id,
