@@ -29,7 +29,7 @@ class AffiliateJWTAuthentication(JWTAuthentication):
         except Affiliate.DoesNotExist:
             raise AuthenticationFailed('Affiliate not found')
 
-        if affiliate.status != 'active':
-            raise AuthenticationFailed('Affiliate account is not active')
+        if affiliate.status == 'deactivated':
+            raise AuthenticationFailed('Affiliate account has been deactivated')
 
         return affiliate
