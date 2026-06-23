@@ -209,11 +209,11 @@ class CampaignTransitionView(APIView):
             for ca in assigned:
                 ca.affiliate.status = 'active'
                 ca.affiliate.save(update_fields=['status'])
-                task_send_campaign_invite.delay(str(ca.affiliate.id), campaign)
+                task_send_campaign_invite.delay(str(ca.affiliate.id), str(campaign.id))
 
         if target_status in ('ended', 'cancelled'):
             if target_status == 'ended':
-                task_send_campaign_ended.delay(str(campaign))
+                task_send_campaign_ended.delay(str(campaign.id))
             assigned = CampaignAffiliate.objects.filter(
                 campaign=campaign, removed_at__isnull=True
             ).select_related('affiliate')
