@@ -370,13 +370,13 @@ class ValidateInviteView(APIView):
         except Affiliate.DoesNotExist:
             return Response({'detail': 'Invalid invite link.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if affiliate.status == 'inactive':
+        if affiliate.status == 'deactivated':
             return Response({'detail': 'This account has been deactivated.'}, status=status.HTTP_403_FORBIDDEN)
 
         if affiliate.invite_expires_at < now():
             return Response({'detail': 'Invite link has expired. Please contact Leyyow.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if affiliate.status == 'active':
+        if affiliate.status in ('active', 'inactive'):
             return Response({'detail': 'You have already registered. Please log in.'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
@@ -403,13 +403,13 @@ class AffiliateRegisterView(APIView):
         except Affiliate.DoesNotExist:
             return Response({'detail': 'Invalid invite link.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if affiliate.status == 'inactive':
+        if affiliate.status == 'deactivated':
             return Response({'detail': 'This account has been deactivated.'}, status=status.HTTP_403_FORBIDDEN)
 
         if affiliate.invite_expires_at < now():
             return Response({'detail': 'Invite link has expired. Please contact Leyyow.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if affiliate.status == 'active':
+        if affiliate.status in ('active', 'inactive'):
             return Response({'detail': 'You have already registered. Please log in.'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
@@ -458,7 +458,7 @@ class AffiliateLoginView(APIView):
         if affiliate.status == 'invited':
             return Response({'detail': 'Please complete your registration using the invite link sent to your email.'}, status=status.HTTP_403_FORBIDDEN)
 
-        if affiliate.status == 'inactive':
+        if affiliate.status == 'deactivated':
             return Response({'detail': 'Your account has been deactivated. Please contact Leyyow.'}, status=status.HTTP_403_FORBIDDEN)
 
         if not affiliate.check_password(password):

@@ -11,8 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from tracking.models import Commission, AffiliateWallet
-
-PAYOUT_THRESHOLD_KOBO = 5_000_000   # ₦50,000 in kobo (Decision 5)
+from accounts.models import SystemSettings
 
 
 def _send(subject, to_email, template_name, context):
@@ -61,8 +60,9 @@ def send_daily_digest(affiliate):
     except AffiliateWallet.DoesNotExist:
         balance_kobo = 0
 
-    remaining_kobo = max(0, PAYOUT_THRESHOLD_KOBO - balance_kobo)
-    above_threshold = balance_kobo >= PAYOUT_THRESHOLD_KOBO
+    payout_threshold_kobo = SystemSettings.get().minimum_withdrawal_kobo
+    remaining_kobo = max(0, payout_threshold_kobo - balance_kobo)
+    above_threshold = balance_kobo >= payout_threshold_kobo
 
     commission_rows = []
     for c in commissions_today:
@@ -98,7 +98,7 @@ def send_daily_digest(affiliate):
             'earned_today_display': f"₦{(total_today_kobo // 100):,}",
             'commissions': commission_rows,
             'wallet_balance_display': f"₦{(balance_kobo // 100):,}",
-            'payout_threshold_display': f"₦{(PAYOUT_THRESHOLD_KOBO // 100):,}",
+            'payout_threshold_display': f"₦{(payout_threshold_kobo // 100):,}",
             'remaining_display': f"₦{(remaining_kobo // 100):,}",
             'above_threshold': above_threshold,
             'earnings_url': earnings_url,

@@ -186,11 +186,13 @@ class AffiliateWalletView(APIView):
                 'total_withdrawn': 0,
             })
 
+        s = SystemSettings.get()
         return Response({
             'balance':                  wallet.balance,
             'total_earned':             wallet.total_earned,
             'total_withdrawn':          wallet.total_withdrawn,
-            'minimum_withdrawal_kobo':  SystemSettings.get().minimum_withdrawal_kobo,
+            'minimum_withdrawal_kobo':  s.minimum_withdrawal_kobo,
+            'transfer_fee':             s.transfer_fee,
         })
 
 
