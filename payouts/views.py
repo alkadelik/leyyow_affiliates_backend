@@ -30,8 +30,6 @@ from django.db import models as db_models
 
 import time
 
-TRANSFER_FEE = SystemSettings.get().transfer_fee
-
 # ── Affiliate bank account views ──────────────────────────────────────────────
 
 class BankAccountListView(APIView):
@@ -243,6 +241,8 @@ class PayoutRequestListView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        transfer_fee = SystemSettings.get().transfer_fee
+
         # Minimum payout check
         minimum_payout = SystemSettings.get().minimum_withdrawal_kobo
         if requested_amount < minimum_payout:
@@ -260,13 +260,13 @@ class PayoutRequestListView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        total_deduction = requested_amount + TRANSFER_FEE
+        total_deduction = requested_amount + transfer_fee
         if wallet.balance < total_deduction:
             return Response(
                 {
                     'detail': (
                         f'Insufficient balance. You need ₦{total_deduction / 100:,.2f} '
-                        f'(requested amount + ₦{TRANSFER_FEE / 100:,.2f} transfer fee) '
+                        f'(requested amount + ₦{transfer_fee / 100:,.2f} transfer fee) '
                         f'but your balance is ₦{wallet.balance / 100:,.2f}.'
                     )
                 },
@@ -283,7 +283,7 @@ class PayoutRequestListView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        net_amount = requested_amount - TRANSFER_FEE
+        net_amount = requested_amount - transfer_fee
 
         with transaction.atomic():
             # Deduct from wallet immediately on request
@@ -296,7 +296,7 @@ class PayoutRequestListView(APIView):
                 affiliate          = request.user,
                 bank_account       = bank_account,
                 requested_amount   = requested_amount,
-                transfer_fee       = TRANSFER_FEE,
+                transfer_fee       = transfer_fee,
                 net_amount         = net_amount,
                 balance_at_request = wallet.balance + total_deduction,
             )
