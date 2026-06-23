@@ -95,8 +95,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_CLASSES': [],  # no global throttle
     'DEFAULT_THROTTLE_RATES': {
-        'auth': '10/hour', # login, forgot-password, register
-        'payout': '5/hour', # payout requests
+        'auth': '100/hour', # login, forgot-password, register
+        'payout': '50/hour', # payout requests
         'token_refresh': '30/hour',
     },
     'NUM_PROXIES': 1, # In case Railway needs it
