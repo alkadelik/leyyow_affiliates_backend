@@ -59,6 +59,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
             'subscriber_tiers',
             'starts_at', 'ends_at', 'conversion_limit',
             'commission_trigger', 'commission_period_days', 'commission_per_tier',
+            'tiered_period_days',
             'affiliate_count', 'created_by_name', 'created_at',
             'conversion_count',
         ]
@@ -87,6 +88,7 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
             'tier', 'subscriber_tiers',
             'starts_at', 'ends_at', 'conversion_limit',
             'commission_trigger', 'commission_period_days', 'commission_per_tier',
+            'tiered_period_days',
             'terms_and_conditions', 'ended_at', 'cancelled_at',
             'created_by_name', 'created_at', 'updated_at', 'affiliates', 'offer',
         ]
@@ -153,6 +155,7 @@ class CreateCampaignSerializer(serializers.Serializer):
     )
     commission_period_days = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     commission_per_tier    = serializers.JSONField(required=False, allow_null=True)
+    tiered_period_days     = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     offer                  = MerchantOfferSerializer(required=False, allow_null=True)
 
     def validate(self, data):
@@ -177,11 +180,14 @@ class CreateCampaignSerializer(serializers.Serializer):
                     raise serializers.ValidationError({'starts_at': 'Start date is required.'})
             if subscriber_tiers:
                 self._validate_subscriber_tiers(subscriber_tiers)
-            # tiered campaigns always fire on every subscription — no trigger needed
+            # tiered campaigns don't use the fixed commission_trigger/period fields
             data['commission_trigger'] = None
             data['commission_period_days'] = None
             data.setdefault('commission_type', None)
             data.setdefault('commission_value', None)
+            # default commission window to 90 days (3 months) if not provided
+            if data.get('tiered_period_days') is None:
+                data['tiered_period_days'] = 90
             return data
 
         # ── Fixed campaign validation ──────────────────────────────────────────

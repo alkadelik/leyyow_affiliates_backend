@@ -40,6 +40,7 @@ class Campaign(models.Model):
     commission_period_days = models.IntegerField(null=True, blank=True)
     commission_per_tier = models.JSONField(null=True, blank=True)
     subscriber_tiers = models.JSONField(null=True, blank=True)
+    tiered_period_days = models.IntegerField(null=True, blank=True, default=90)
     tier = models.CharField(max_length=32, null=True, blank=True)
     starts_at = models.DateTimeField(null=True, blank=True)
     ends_at = models.DateTimeField(null=True, blank=True)

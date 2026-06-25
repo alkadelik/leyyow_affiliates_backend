@@ -106,7 +106,7 @@ def _check_eligibility(lead, occurred_at, amount_paid_kobo):
     campaign = lead.campaign
 
     if campaign.campaign_type == 'tiered':
-        return _check_tiered_eligibility(lead, amount_paid_kobo)
+        return _check_tiered_eligibility(lead, occurred_at, amount_paid_kobo)
 
     # ── Fixed campaign ────────────────────────────────────────────────────────
 
@@ -137,18 +137,21 @@ def _check_eligibility(lead, occurred_at, amount_paid_kobo):
     }
 
 
-def _check_tiered_eligibility(lead, amount_paid_kobo):
+def _check_tiered_eligibility(lead, occurred_at, amount_paid_kobo):
     """
     Evaluate commission for a tiered campaign.
 
     Subscriber count is taken AFTER the lead's status has already been updated
     (lead.save() runs before this is called), so the new subscriber is included.
+    The count always includes all active (subscribed/renewed) merchants regardless
+    of the tiered_period_days window — the window only gates commission payouts.
     """
     from tracking.models import MerchantLead
 
-    campaign        = lead.campaign
+    campaign         = lead.campaign
     subscriber_tiers = campaign.subscriber_tiers or []
 
+    # All active merchants count toward the tier regardless of period
     subscriber_count = MerchantLead.objects.filter(
         affiliate=lead.affiliate,
         campaign=campaign,
@@ -164,6 +167,12 @@ def _check_tiered_eligibility(lead, amount_paid_kobo):
             break
 
     if not matched_tier:
+        return False, 0, {}
+
+    # Period gate: merchant counts toward tier but earns no commission after window
+    period_days = campaign.tiered_period_days or 90
+    cutoff = lead.signed_up_at + timedelta(days=period_days)
+    if occurred_at > cutoff:
         return False, 0, {}
 
     commission_type  = matched_tier['commission_type']
