@@ -81,21 +81,23 @@ class CampaignListView(APIView):
 
         data     = serializer.validated_data
         campaign = Campaign.objects.create(
-            name                 = data['name'],
-            description          = data.get('description'),
-            commission_type      = data['commission_type'],
-            commission_value     = data['commission_value'],
-            commission_cap       = data.get('commission_cap'),
-            tier                 = data.get('tier'),
-            starts_at            = data.get('starts_at'),
-            ends_at              = data.get('ends_at'),
-            conversion_limit     = data.get('conversion_limit'),
-            terms_and_conditions = data.get('terms_and_conditions'),
-            commission_trigger      = data.get('commission_trigger'),
-            commission_period_days  = data.get('commission_period_days'),
-            commission_per_tier     = data.get('commission_per_tier'),
-            status               = 'draft',
-            created_by           = request.user,
+            name                   = data['name'],
+            description            = data.get('description'),
+            campaign_type          = data.get('campaign_type', 'fixed'),
+            commission_type        = data.get('commission_type'),
+            commission_value       = data.get('commission_value'),
+            commission_cap         = data.get('commission_cap'),
+            subscriber_tiers       = data.get('subscriber_tiers'),
+            tier                   = data.get('tier'),
+            starts_at              = data.get('starts_at'),
+            ends_at                = data.get('ends_at'),
+            conversion_limit       = data.get('conversion_limit'),
+            terms_and_conditions   = data.get('terms_and_conditions'),
+            commission_trigger     = data.get('commission_trigger'),
+            commission_period_days = data.get('commission_period_days'),
+            commission_per_tier    = data.get('commission_per_tier'),
+            status                 = 'draft',
+            created_by             = request.user,
         )
 
         affiliate_ids = request.data.get('affiliate_ids', [])
@@ -126,7 +128,7 @@ class CampaignListView(APIView):
                     campaign=campaign,
                     affiliate=affiliate,
                     slug=slug,
-                    full_url=f"{(SystemSettings.get().tracking_base_url or getattr(settings, 'TRACKING_BASE_URL', 'https://leyyow.com')).rstrip('/')}/r/{slug}",
+                    full_url=f"{settings.AFFILIATE_FRONTEND_URL.rstrip('/')}/r/{slug}",
                 )
 
         log_action(

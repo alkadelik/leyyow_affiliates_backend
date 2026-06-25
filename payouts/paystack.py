@@ -78,6 +78,29 @@ def resolve_account(account_number, bank_code):
     return data['data']['account_name']
 
 
+def verify_transaction(payment_id):
+    """
+    Verify a Paystack transaction by its reference.
+    Returns {'status': str, 'amount': int_kobo}.
+    status is 'success' for a confirmed payment, anything else means unconfirmed.
+    Raises ValueError on API-level errors (triggers Celery retry).
+    """
+    resp = requests.get(
+        f'{PAYSTACK_BASE}/transaction/verify/{payment_id}',
+        headers=_headers(),
+        timeout=30,
+    )
+    if resp.status_code == 404:
+        return {'status': 'not_found', 'amount': 0}
+    data = resp.json()
+    if not data.get('status'):
+        raise ValueError(data.get('message', 'Verification request failed'))
+    return {
+        'status': data['data']['status'],
+        'amount': data['data']['amount'],
+    }
+
+
 def verify_webhook(payload_bytes, signature):
     """Verify Paystack webhook signature."""
     secret = settings.PAYSTACK_SECRET_KEY.encode('utf-8')

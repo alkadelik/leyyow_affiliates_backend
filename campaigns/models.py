@@ -11,6 +11,11 @@ class Campaign(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
+    CAMPAIGN_TYPE_CHOICES = [
+        ('fixed',  'Fixed'),
+        ('tiered', 'Tiered'),
+    ]
+
     COMMISSION_TYPES = [
         ('flat_fee',          'Flat Fee'),
         ('percentage',        'Percentage'),
@@ -27,12 +32,14 @@ class Campaign(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='draft')
-    commission_type = models.CharField(max_length=24, choices=COMMISSION_TYPES)
+    campaign_type = models.CharField(max_length=16, choices=CAMPAIGN_TYPE_CHOICES, default='fixed')
+    commission_type = models.CharField(max_length=24, choices=COMMISSION_TYPES, null=True, blank=True)
     commission_value = models.IntegerField(null=True, blank=True)
     commission_cap = models.IntegerField(null=True, blank=True)
     commission_trigger = models.CharField(max_length=32, choices=COMMISSION_TRIGGER_CHOICES, null=True, blank=True)
     commission_period_days = models.IntegerField(null=True, blank=True)
     commission_per_tier = models.JSONField(null=True, blank=True)
+    subscriber_tiers = models.JSONField(null=True, blank=True)
     tier = models.CharField(max_length=32, null=True, blank=True)
     starts_at = models.DateTimeField(null=True, blank=True)
     ends_at = models.DateTimeField(null=True, blank=True)

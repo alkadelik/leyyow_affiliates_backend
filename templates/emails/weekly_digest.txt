@@ -1,0 +1,31 @@
+Your Leyyow weekly update — {{ week_end_display }}
+====================================================
+
+Hi {{ first_name }},
+
+Here's what happened on your campaigns this week.
+
+ACTIVITY SUMMARY
+{% if new_signups %}{{ new_signups }} new signup{{ new_signups|pluralize }}
+{% endif %}{% if commission_count %}{{ commission_count }} commission{{ commission_count|pluralize }} earned — {{ earned_this_week_display }}
+{% endif %}{% if reversal_count %}{{ reversal_count }} reversal{{ reversal_count|pluralize }} — {{ reversed_this_week_display }}
+{% endif %}
+{% if commissions %}COMMISSIONS EARNED
+{% for c in commissions %}{{ c.merchant_name }} · {{ c.campaign_name }}  +{{ c.amount_display }}
+{% endfor %}{% endif %}
+{% if reversals %}COMMISSIONS REVERSED
+{% for r in reversals %}{{ r.merchant_name }} · {{ r.campaign_name }}  −{{ r.amount_display }}
+{% endfor %}{% endif %}
+WALLET
+Balance:           {{ wallet_balance_display }}
+Payout threshold:  {{ payout_threshold_display }}
+{% if above_threshold %}Your balance has reached the payout threshold. You can request a withdrawal.
+{% else %}Remaining to threshold:  {{ remaining_display }}{% endif %}
+
+View your full earnings:
+{{ earnings_url }}
+
+---
+Leyyow Affiliates
+You receive one digest per week when there is activity.
+© {% now "Y" %} Leyyow

@@ -125,5 +125,5 @@ CORS_ALLOW_HEADERS = list(default_headers) + ['x-internal-api-key']
 
 ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default='http://localhost:5173')
 AFFILIATE_FRONTEND_URL = config('AFFILIATE_FRONTEND_URL', default='http://localhost:5174')
-TRACKING_BASE_URL = config('TRACKING_BASE_URL', default='http://localhost:8000')
+TRACKING_BASE_URL = config('TRACKING_BASE_URL', default='https://leyyow.com')
 CAMPAIGN_LANDING_URL = config('CAMPAIGN_LANDING_URL', default='https://leyyow.com')

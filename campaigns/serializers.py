@@ -18,8 +18,9 @@ class CampaignListSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Campaign
         fields = [
-            'id', 'name', 'status', 'commission_type',
-            'commission_value', 'commission_cap', 'tier',
+            'id', 'name', 'status', 'campaign_type',
+            'commission_type', 'commission_value', 'commission_cap', 'tier',
+            'subscriber_tiers',
             'starts_at', 'ends_at', 'conversion_limit',
             'commission_trigger', 'commission_period_days', 'commission_per_tier',
             'affiliate_count', 'created_by_name', 'created_at',
@@ -34,7 +35,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
 
     def get_conversion_count(self, obj):
         from tracking.models import MerchantLead
-        return MerchantLead.objects.filter(campaign=obj, status='subscribed').count()
+        return MerchantLead.objects.filter(campaign=obj, status__in=['subscribed', 'renewed']).count()
 
 
 class CampaignDetailSerializer(serializers.ModelSerializer):
@@ -44,9 +45,10 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Campaign
         fields = [
-            'id', 'name', 'description', 'status',
+            'id', 'name', 'description', 'status', 'campaign_type',
             'commission_type', 'commission_value', 'commission_cap',
-            'tier', 'starts_at', 'ends_at', 'conversion_limit',
+            'tier', 'subscriber_tiers',
+            'starts_at', 'ends_at', 'conversion_limit',
             'commission_trigger', 'commission_period_days', 'commission_per_tier',
             'terms_and_conditions', 'ended_at', 'cancelled_at',
             'created_by_name', 'created_at', 'updated_at', 'affiliates',
@@ -72,28 +74,62 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
 
 
 class CreateCampaignSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=255)
-    description = serializers.CharField(required=False, allow_blank=True)
-    commission_type = serializers.ChoiceField(choices=['flat_fee', 'percentage', 'percentage_capped'])
-    commission_value = serializers.IntegerField(required=False, allow_null=True, min_value=0)
-    commission_cap = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    tier = serializers.CharField(required=False, allow_blank=True)
-    starts_at = serializers.DateTimeField(required=False, allow_null=True)
-    ends_at = serializers.DateTimeField(required=False, allow_null=True)
-    conversion_limit = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    name                 = serializers.CharField(max_length=255)
+    description          = serializers.CharField(required=False, allow_blank=True)
+    campaign_type        = serializers.ChoiceField(choices=['fixed', 'tiered'], default='fixed')
+    commission_type      = serializers.ChoiceField(
+        choices=['flat_fee', 'percentage', 'percentage_capped'],
+        required=False, allow_null=True,
+    )
+    commission_value     = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    commission_cap       = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    subscriber_tiers     = serializers.JSONField(required=False, allow_null=True)
+    tier                 = serializers.CharField(required=False, allow_blank=True)
+    starts_at            = serializers.DateTimeField(required=False, allow_null=True)
+    ends_at              = serializers.DateTimeField(required=False, allow_null=True)
+    conversion_limit     = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     terms_and_conditions = serializers.CharField(required=False, allow_blank=True)
-    commission_trigger = serializers.ChoiceField(choices=COMMISSION_TRIGGER_CHOICES, required=False, allow_blank=True, allow_null=True,)
+    commission_trigger   = serializers.ChoiceField(
+        choices=COMMISSION_TRIGGER_CHOICES,
+        required=False, allow_blank=True, allow_null=True,
+    )
     commission_period_days = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    commission_per_tier = serializers.JSONField(required=False, allow_null=True)
+    commission_per_tier    = serializers.JSONField(required=False, allow_null=True)
 
     def validate(self, data):
-        is_draft = self.context.get('is_draft', False)
-        commission_type = data.get('commission_type')
-        commission_cap = data.get('commission_cap')
-        starts_at = data.get('starts_at')
-        ends_at = data.get('ends_at')
+        is_draft      = self.context.get('is_draft', False)
+        campaign_type = data.get('campaign_type', 'fixed')
+        starts_at     = data.get('starts_at')
+        ends_at       = data.get('ends_at')
+
+        if starts_at and ends_at and ends_at <= starts_at:
+            raise serializers.ValidationError(
+                {'ends_at': 'End date must be after start date.'}
+            )
+
+        if campaign_type == 'tiered':
+            subscriber_tiers = data.get('subscriber_tiers')
+            if not is_draft:
+                if not subscriber_tiers or not isinstance(subscriber_tiers, list) or len(subscriber_tiers) == 0:
+                    raise serializers.ValidationError(
+                        {'subscriber_tiers': 'At least one tier is required for tiered campaigns.'}
+                    )
+                if starts_at is None:
+                    raise serializers.ValidationError({'starts_at': 'Start date is required.'})
+            if subscriber_tiers:
+                self._validate_subscriber_tiers(subscriber_tiers)
+            # tiered campaigns always fire on every subscription — no trigger needed
+            data['commission_trigger'] = None
+            data['commission_period_days'] = None
+            data.setdefault('commission_type', None)
+            data.setdefault('commission_value', None)
+            return data
+
+        # ── Fixed campaign validation ──────────────────────────────────────────
+        commission_type    = data.get('commission_type')
+        commission_cap     = data.get('commission_cap')
         commission_trigger = data.get('commission_trigger')
-        period_days = data.get('commission_period_days')
+        period_days        = data.get('commission_period_days')
 
         if not is_draft:
             if not data.get('commission_value'):
@@ -111,10 +147,6 @@ class CreateCampaignSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'commission_value': 'Percentage value cannot exceed 10000 basis points (100%).'}
             )
-        if starts_at and ends_at and ends_at <= starts_at:
-            raise serializers.ValidationError(
-                {'ends_at': 'End date must be after start date.'}
-            )
         if not is_draft and commission_trigger == 'subscriptions_within_period' and not period_days:
             raise serializers.ValidationError(
                 {'commission_period_days': 'Required when commission_trigger is subscriptions_within_period.'}
@@ -123,13 +155,56 @@ class CreateCampaignSerializer(serializers.Serializer):
             data['commission_period_days'] = None
 
         return data
-    
+
+    def _validate_subscriber_tiers(self, tiers):
+        for i, tier in enumerate(tiers):
+            label = f'Tier {i + 1}'
+            if 'min_subs' not in tier:
+                raise serializers.ValidationError(
+                    {'subscriber_tiers': f'{label}: min_subs is required.'}
+                )
+            if tier.get('min_subs', 0) < 0:
+                raise serializers.ValidationError(
+                    {'subscriber_tiers': f'{label}: min_subs must be >= 0.'}
+                )
+            if 'commission_type' not in tier or tier['commission_type'] not in ('flat_fee', 'percentage'):
+                raise serializers.ValidationError(
+                    {'subscriber_tiers': f'{label}: commission_type must be flat_fee or percentage.'}
+                )
+            if 'commission_value' not in tier or tier.get('commission_value', -1) < 0:
+                raise serializers.ValidationError(
+                    {'subscriber_tiers': f'{label}: commission_value must be >= 0.'}
+                )
+            if tier['commission_type'] == 'percentage' and tier.get('commission_value', 0) > 10000:
+                raise serializers.ValidationError(
+                    {'subscriber_tiers': f'{label}: percentage cannot exceed 10000 basis points (100%).'}
+                )
+            max_s = tier.get('max_subs')
+            if max_s is not None and max_s < tier['min_subs']:
+                raise serializers.ValidationError(
+                    {'subscriber_tiers': f'{label}: max_subs must be >= min_subs.'}
+                )
+
+        # All tiers must use the same commission type
+        types = {tier['commission_type'] for tier in tiers}
+        if len(types) > 1:
+            raise serializers.ValidationError(
+                {'subscriber_tiers': 'All tiers must use the same commission type (flat fee or percentage).'}
+            )
+
 
 class UpdateCampaignSerializer(CreateCampaignSerializer):
-    name = serializers.CharField(max_length=255, required=False)
-    commission_type = serializers.ChoiceField(choices=['flat_fee', 'percentage', 'percentage_capped'], required=False)
-    commission_value = serializers.IntegerField(min_value=0, required=False, allow_null=True)
-    commission_trigger = serializers.ChoiceField(choices=COMMISSION_TRIGGER_CHOICES, required=False, allow_blank=True, allow_null=True)
+    name             = serializers.CharField(max_length=255, required=False)
+    campaign_type    = serializers.ChoiceField(choices=['fixed', 'tiered'], required=False)
+    commission_type  = serializers.ChoiceField(
+        choices=['flat_fee', 'percentage', 'percentage_capped'],
+        required=False, allow_blank=True, allow_null=True,
+    )
+    commission_value   = serializers.IntegerField(min_value=0, required=False, allow_null=True)
+    commission_trigger = serializers.ChoiceField(
+        choices=COMMISSION_TRIGGER_CHOICES,
+        required=False, allow_blank=True, allow_null=True,
+    )
 
 
 class TransitionCampaignSerializer(serializers.Serializer):

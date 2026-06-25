@@ -149,6 +149,7 @@ class SystemSettings(models.Model):
     minimum_withdrawal_kobo = models.IntegerField(default=5000000)
     transfer_fee = models.IntegerField(default=10000)
     tracking_base_url = models.CharField(max_length=255, blank=True, default='')
+    refund_window_days = models.IntegerField(default=30)
 
     class Meta:
         verbose_name = 'System Settings'

@@ -1,16 +1,15 @@
 """
 tracking/emails.py
 
-Daily digest email for affiliates.
-Called by: python manage.py send_digest
-Templates live in: affiliates_backend/templates/emails/
+Weekly affiliate digest. Sent by the send_digest management command.
 """
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils import timezone
+from datetime import timedelta
 
-from tracking.models import Commission, AffiliateWallet
+from tracking.models import Commission, MerchantLead, AffiliateWallet
 from accounts.models import SystemSettings
 
 
@@ -28,32 +27,39 @@ def _send(subject, to_email, template_name, context):
     msg.send()
 
 
-def send_daily_digest(affiliate):
+def send_weekly_digest(affiliate):
     """
-    Send a daily digest to a single affiliate.
-    Only called when there is at least one confirmed commission today.
-    The management command filters to affiliates with activity before calling this.
-
-    Aggregates:
-      - All confirmed commissions earned today (local date)
-      - Current wallet balance
-      - Distance to payout threshold
+    Send a weekly activity digest to a single affiliate.
+    Only called when there is at least one activity item this week.
     """
-    today = timezone.localdate()
+    since = timezone.now() - timedelta(days=7)
 
-    commissions_today = Commission.objects.filter(
+    new_signups = MerchantLead.objects.filter(
         affiliate=affiliate,
-        status='confirmed',
-        created_at__date=today,
-    ).select_related('conversion__merchant', 'campaign').order_by('created_at')
+        signed_up_at__gte=since,
+    ).count()
 
-    commission_count = commissions_today.count()
-    if commission_count == 0:
-        return  # Nothing to send — guard in case called directly
+    commissions_this_week = Commission.objects.filter(
+        affiliate=affiliate,
+        status='earned',
+        earned_at__gte=since,
+    ).select_related('conversion', 'campaign').order_by('earned_at')
 
-    total_today_kobo = sum(c.amount for c in commissions_today)
+    reversals_this_week = Commission.objects.filter(
+        affiliate=affiliate,
+        status='reversed',
+        reversed_at__gte=since,
+    ).select_related('conversion', 'campaign').order_by('reversed_at')
 
-    # Wallet balance
+    commission_count  = commissions_this_week.count()
+    reversal_count    = reversals_this_week.count()
+
+    if new_signups == 0 and commission_count == 0 and reversal_count == 0:
+        return
+
+    total_earned_kobo   = sum(c.amount for c in commissions_this_week)
+    total_reversed_kobo = sum(c.amount for c in reversals_this_week)
+
     try:
         wallet = AffiliateWallet.objects.get(affiliate=affiliate)
         balance_kobo = wallet.balance
@@ -61,46 +67,54 @@ def send_daily_digest(affiliate):
         balance_kobo = 0
 
     payout_threshold_kobo = SystemSettings.get().minimum_withdrawal_kobo
-    remaining_kobo = max(0, payout_threshold_kobo - balance_kobo)
-    above_threshold = balance_kobo >= payout_threshold_kobo
+    remaining_kobo        = max(0, payout_threshold_kobo - balance_kobo)
+    above_threshold       = balance_kobo >= payout_threshold_kobo
 
-    commission_rows = []
-    for c in commissions_today:
-        merchant_name = getattr(
-            getattr(c.conversion, 'merchant', None), 'business_name', 'Unknown merchant'
-        )
-        campaign_name = c.campaign.name if c.campaign else ''
-        commission_rows.append({
-            'merchant_name': merchant_name,
-            'campaign_name': campaign_name,
+    commission_rows = [
+        {
+            'merchant_name': getattr(c.conversion, 'merchant_name', None) or 'Unknown merchant',
+            'campaign_name': c.campaign.name if c.campaign else '',
             'amount_display': f"₦{(c.amount // 100):,}",
-        })
+        }
+        for c in commissions_this_week
+    ]
 
-    # Date display
-    day_names = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-    digest_date_display = (
+    reversal_rows = [
+        {
+            'merchant_name': getattr(c.conversion, 'merchant_name', None) or 'Unknown merchant',
+            'campaign_name': c.campaign.name if c.campaign else '',
+            'amount_display': f"₦{(c.amount // 100):,}",
+        }
+        for c in reversals_this_week
+    ]
+
+    today = timezone.localdate()
+    day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    week_end_display = (
         f"{day_names[today.weekday()]}, "
         f"{today.strftime('%-d %B %Y')}"
     )
 
-    earnings_url = f"{settings.AFFILIATE_FRONTEND_URL}/analytics"
-
     first_name = affiliate.full_name.split()[0]
 
     _send(
-        subject=f"Your Leyyow earnings update — {digest_date_display}",
+        subject=f"Your Leyyow weekly update — {week_end_display}",
         to_email=affiliate.email,
-        template_name='emails/daily_digest',
+        template_name='emails/weekly_digest',
         context={
-            'first_name': first_name,
-            'digest_date_display': digest_date_display,
-            'commission_count': commission_count,
-            'earned_today_display': f"₦{(total_today_kobo // 100):,}",
-            'commissions': commission_rows,
-            'wallet_balance_display': f"₦{(balance_kobo // 100):,}",
+            'first_name':               first_name,
+            'week_end_display':         week_end_display,
+            'new_signups':              new_signups,
+            'commission_count':         commission_count,
+            'reversal_count':           reversal_count,
+            'earned_this_week_display': f"₦{(total_earned_kobo // 100):,}",
+            'reversed_this_week_display': f"₦{(total_reversed_kobo // 100):,}",
+            'commissions':              commission_rows,
+            'reversals':                reversal_rows,
+            'wallet_balance_display':   f"₦{(balance_kobo // 100):,}",
             'payout_threshold_display': f"₦{(payout_threshold_kobo // 100):,}",
-            'remaining_display': f"₦{(remaining_kobo // 100):,}",
-            'above_threshold': above_threshold,
-            'earnings_url': earnings_url,
+            'remaining_display':        f"₦{(remaining_kobo // 100):,}",
+            'above_threshold':          above_threshold,
+            'earnings_url':             f"{settings.AFFILIATE_FRONTEND_URL}/analytics",
         },
     )

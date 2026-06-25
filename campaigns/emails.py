@@ -64,8 +64,7 @@ def send_campaign_invite(affiliate, campaign):
 
     try:
         link = AffiliateLink.objects.get(affiliate=affiliate, campaign=campaign)
-        _base = SystemSettings.get().tracking_base_url or getattr(settings, 'TRACKING_BASE_URL', 'https://leyyow.com')
-        tracking_url = f"{_base.rstrip('/')}/r/{link.slug}"
+        tracking_url = f"{settings.AFFILIATE_FRONTEND_URL.rstrip('/')}/r/{link.slug}"
     except AffiliateLink.DoesNotExist:
         tracking_url = ''
 

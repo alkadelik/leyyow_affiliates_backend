@@ -1167,12 +1167,14 @@ class SystemSettingsView(APIView):
         return Response({
             'payout_auto_approve':     s.payout_auto_approve,
             'minimum_withdrawal_kobo': s.minimum_withdrawal_kobo,
+            'transfer_fee':            s.transfer_fee,
+            'refund_window_days':      s.refund_window_days,
             'tracking_base_url':       s.tracking_base_url,
         })
 
     def patch(self, request):
         s = SystemSettings.get()
-        allowed = {'payout_auto_approve', 'minimum_withdrawal_kobo', 'tracking_base_url'}
+        allowed = {'payout_auto_approve', 'minimum_withdrawal_kobo', 'transfer_fee', 'refund_window_days', 'tracking_base_url'}
         fields_to_save = []
         for field in allowed:
             if field in request.data:
@@ -1183,5 +1185,7 @@ class SystemSettingsView(APIView):
         return Response({
             'payout_auto_approve':     s.payout_auto_approve,
             'minimum_withdrawal_kobo': s.minimum_withdrawal_kobo,
+            'transfer_fee':            s.transfer_fee,
+            'refund_window_days':      s.refund_window_days,
             'tracking_base_url':       s.tracking_base_url,
         })

@@ -1,17 +1,17 @@
-import hashlib
 import hmac
 from django.conf import settings
 from django.utils import timezone
 from django.db import transaction
+from datetime import timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from datetime import timedelta
 
 from .models import AffiliateCode, MerchantLead, Conversion, Commission, CentralWallet
-from accounts.models import AffiliateWallet
+from accounts.models import AffiliateWallet, SystemSettings
 from audit.utils import log_action
-from tracking.commission import _check_eligibility
+from tracking.commission import _check_eligibility, reverse_commission
+from tracking.task import task_confirm_payment
 
 
 def verify_internal_key(request):
@@ -56,7 +56,7 @@ class MerchantSignupView(APIView):
             campaign=campaign,
             merchant_id=merchant_id,
             merchant_name=merchant_name,
-            status='trial',
+            status='signed_up',
             signed_up_at=signed_up_at,
         )
 
@@ -69,7 +69,7 @@ class MerchantSignupView(APIView):
         )
 
         return Response({'lead_id': str(lead.id)}, status=status.HTTP_201_CREATED)
-    
+
 
 class MerchantSubscriptionView(APIView):
     authentication_classes = []
@@ -79,21 +79,34 @@ class MerchantSubscriptionView(APIView):
         if not verify_internal_key(request):
             return Response({'error': 'Unauthorised'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        merchant_id           = request.data.get('merchant_id')
-        event_type            = request.data.get('event_type')
-        subscription_tier     = request.data.get('subscription_tier')
-        subscription_start    = request.data.get('subscription_start')
-        subscription_end      = request.data.get('subscription_end')
-        amount_paid_kobo      = request.data.get('amount_paid_kobo')
+        merchant_id              = request.data.get('merchant_id')
+        event_type               = request.data.get('event_type')
+        subscription_tier        = request.data.get('subscription_tier')
+        subscription_start       = request.data.get('subscription_start')
+        subscription_end         = request.data.get('subscription_end')
+        amount_paid_kobo         = request.data.get('amount_paid_kobo')
         merchant_subscription_id = request.data.get('merchant_subscription_id')
-        occurred_at           = request.data.get('occurred_at', timezone.now())
+        occurred_at              = request.data.get('occurred_at', timezone.now())
+        event_id                 = request.data.get('event_id')
+        payment_id               = request.data.get('payment_id')
 
-        if not all([merchant_id, event_type, occurred_at]):
-            return Response({'error': 'merchant_id, event_type and occurred_at are required'},
+        if not all([merchant_id, event_type, occurred_at, event_id]):
+            return Response({'error': 'merchant_id, event_type, occurred_at and event_id are required'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if event_type not in ('subscribed', 'renewed', 'expired', 'cancelled', 'trial_ended'):
+        if event_type in ('subscribed', 'renewed') and not payment_id:
+            return Response({'error': 'payment_id is required for subscribed and renewed events'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if event_type not in ('trial_started', 'trial_ended', 'subscribed', 'renewed', 'expired', 'cancelled'):
             return Response({'error': 'Invalid event_type'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Deduplication: if we've already processed this event_id, return early
+        if Conversion.objects.filter(external_event_id=event_id).exists():
+            return Response({'detail': 'Already processed.'}, status=status.HTTP_200_OK)
+
+        if payment_id and Conversion.objects.filter(payment_id=payment_id).exists():
+            return Response({'error': 'payment_id has already been used'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             lead = MerchantLead.objects.select_related(
@@ -103,8 +116,7 @@ class MerchantSubscriptionView(APIView):
             return Response({'error': 'Merchant lead not found'}, status=status.HTTP_404_NOT_FOUND)
 
         with transaction.atomic():
-            # Update lead
-            lead.status           = _map_event_to_status(event_type)
+            lead.status             = _map_event_to_status(event_type)
             lead.subscription_tier  = subscription_tier or lead.subscription_tier
             lead.subscription_start = subscription_start or lead.subscription_start
             lead.subscription_end   = subscription_end or lead.subscription_end
@@ -119,10 +131,11 @@ class MerchantSubscriptionView(APIView):
 
             lead.save()
 
-            commission_created = False
+            commission_created  = False
+            commission_reversed = False
 
             if event_type in ('subscribed', 'renewed'):
-                eligible, amount = _check_eligibility(lead, occurred_at, amount_paid_kobo)
+                eligible, amount, snapshot = _check_eligibility(lead, occurred_at, amount_paid_kobo)
 
                 if eligible:
                     conversion = Conversion.objects.create(
@@ -136,47 +149,46 @@ class MerchantSubscriptionView(APIView):
                         registration_at=lead.signed_up_at,
                         converted_at=occurred_at,
                         lead=lead,
+                        external_event_id=event_id,
+                        payment_id=payment_id,
                     )
 
                     campaign = lead.campaign
+                    # Commission created as pending — wallet credited only after
+                    # Paystack confirms the payment in task_confirm_payment.
                     commission = Commission.objects.create(
                         conversion=conversion,
                         affiliate=lead.affiliate,
                         campaign=campaign,
-                        status='earned',
+                        status='pending',
                         amount=amount,
-                        payment_amount=amount,
-                        commission_type_snapshot=campaign.commission_type,
-                        commission_value_snapshot=campaign.commission_value,
-                        commission_cap_snapshot=campaign.commission_cap,
+                        payment_amount=amount_paid_kobo or 0,
+                        commission_type_snapshot=snapshot.get('commission_type_snapshot') or campaign.commission_type,
+                        commission_value_snapshot=snapshot.get('commission_value_snapshot') or campaign.commission_value,
+                        commission_cap_snapshot=snapshot.get('commission_cap_snapshot') or campaign.commission_cap,
                         earned_at=occurred_at,
                     )
 
-                    # Credit affiliate wallet
-                    wallet, _ = AffiliateWallet.objects.get_or_create(affiliate=lead.affiliate)
-                    wallet.balance        += amount
-                    wallet.total_earned   += amount
-                    wallet.save()
-
-                    # Debit central wallet
-                    central = CentralWallet.objects.select_for_update().get(id=1)
-                    central.balance                     -= amount
-                    central.total_commissions_allocated += amount
-                    central.save()
+                    task_confirm_payment.delay(str(conversion.id))
 
                     commission_created = True
 
                     log_action(
                         actor_type='system',
-                        action='commission_earned',
+                        action='commission_pending',
                         entity_type='commission',
                         entity_id=str(commission.id),
                         metadata={
                             'merchant_id': merchant_id,
                             'event_type': event_type,
-                            'amount': amount,
+                            'payment_id': payment_id,
                         }
                     )
+
+            elif event_type == 'cancelled':
+                reversed_commission = _maybe_clawback(lead)
+                if reversed_commission:
+                    commission_reversed = True
 
             log_action(
                 actor_type='system',
@@ -187,12 +199,14 @@ class MerchantSubscriptionView(APIView):
                     'merchant_id': merchant_id,
                     'event_type': event_type,
                     'commission_created': commission_created,
+                    'commission_reversed': commission_reversed,
                 }
             )
 
         return Response({
             'lead_id': str(lead.id),
             'commission_created': commission_created,
+            'commission_reversed': commission_reversed,
         }, status=status.HTTP_200_OK)
 
 
@@ -229,9 +243,42 @@ class MerchantLeadInternalListView(APIView):
 
 def _map_event_to_status(event_type):
     return {
-        'subscribed':   'subscribed',
-        'renewed':      'subscribed',
-        'expired':      'expired',
-        'cancelled':    'cancelled',
-        'trial_ended':  'signed_up',
+        'trial_started': 'trial',
+        'trial_ended':   'trial_complete',
+        'subscribed':    'subscribed',
+        'renewed':       'renewed',
+        'expired':       'expired',
+        'cancelled':     'cancelled',
     }[event_type]
+
+
+def _maybe_clawback(lead):
+    """
+    Reverse the first subscription commission if the merchant cancels within the
+    refund window. Returns the reversed Commission, or None if no clawback applies.
+    """
+    if not lead.first_subscribed_at:
+        return None
+
+    refund_window = timedelta(days=SystemSettings.get().refund_window_days)
+    if timezone.now() - lead.first_subscribed_at > refund_window:
+        return None
+
+    first_conversion = (
+        Conversion.objects
+        .filter(lead=lead)
+        .order_by('created_at')
+        .first()
+    )
+    if not first_conversion:
+        return None
+
+    first_commission = (
+        Commission.objects
+        .filter(conversion=first_conversion, status='earned')
+        .first()
+    )
+    if not first_commission:
+        return None
+
+    return reverse_commission(first_commission)

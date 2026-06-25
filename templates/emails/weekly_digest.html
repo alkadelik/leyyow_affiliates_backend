@@ -1,0 +1,182 @@
+{% extends "emails/base_email.html" %}
+
+{# Context variables expected:
+   - first_name                 : str
+   - week_end_display           : str
+   - new_signups                : int
+   - commission_count           : int
+   - reversal_count             : int
+   - earned_this_week_display   : str
+   - reversed_this_week_display : str
+   - commissions                : list of { merchant_name, campaign_name, amount_display }
+   - reversals                  : list of { merchant_name, campaign_name, amount_display }
+   - wallet_balance_display     : str
+   - payout_threshold_display   : str
+   - remaining_display          : str
+   - above_threshold            : bool
+   - earnings_url               : str
+#}
+
+{% block subject %}Your Leyyow weekly update — {{ week_end_display }}{% endblock %}
+
+{% block hero %}
+<tr>
+  <td style="background-color:#FFEECD;padding:32px 32px 24px;border-bottom:1px solid #F0D8A0;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+      <tr>
+        <td style="width:48px;height:48px;background-color:#FEAA00;border-radius:14px;text-align:center;vertical-align:middle;">
+          <span style="font-size:22px;line-height:48px;">📊</span>
+        </td>
+      </tr>
+    </table>
+    <h1 style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#14110E;margin:0 0 8px;line-height:1.25;">Your weekly update</h1>
+    <p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#462C1F;margin:0;line-height:1.6;">
+      Week ending {{ week_end_display }}
+    </p>
+  </td>
+</tr>
+{% endblock %}
+
+{% block body %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7;margin:0 0 20px;">
+  Hi <strong style="color:#14110E;">{{ first_name }}</strong>, here's what happened on your campaigns this week.
+</p>
+
+<!-- Activity summary pills -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+  <tr>
+    {% if new_signups %}
+    <td style="padding:0 6px 0 0;width:33%;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+             style="background-color:#F5F0E8;border-radius:8px;padding:14px 12px;text-align:center;">
+        <tr><td style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#14110E;">{{ new_signups }}</td></tr>
+        <tr><td style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;padding-top:2px;">New signup{{ new_signups|pluralize }}</td></tr>
+      </table>
+    </td>
+    {% endif %}
+    {% if commission_count %}
+    <td style="padding:0 6px;{% if not new_signups %}padding-left:0;{% endif %}width:33%;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+             style="background-color:#EAF5F0;border-radius:8px;padding:14px 12px;text-align:center;">
+        <tr><td style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#085041;">{{ commission_count }}</td></tr>
+        <tr><td style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;padding-top:2px;">Commission{{ commission_count|pluralize }} earned</td></tr>
+      </table>
+    </td>
+    {% endif %}
+    {% if reversal_count %}
+    <td style="padding:0 0 0 6px;width:33%;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+             style="background-color:#FFF0EE;border-radius:8px;padding:14px 12px;text-align:center;">
+        <tr><td style="font-family:'Outfit',Arial,sans-serif;font-size:22px;font-weight:700;color:#E05A3A;">{{ reversal_count }}</td></tr>
+        <tr><td style="font-family:'Outfit',Arial,sans-serif;font-size:11px;color:#6B6560;padding-top:2px;">Reversal{{ reversal_count|pluralize }}</td></tr>
+      </table>
+    </td>
+    {% endif %}
+  </tr>
+</table>
+
+{% if commissions %}
+<!-- Commissions earned -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 12px;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:4px;">
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;padding:0 0 10px;">Commissions earned</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;font-weight:700;color:#085041;text-align:right;padding:0 0 10px;">+ {{ earned_this_week_display }}</td>
+  </tr>
+</table>
+{% for c in commissions %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="border-bottom:1px solid #F0EAE0;{% if forloop.last %}border-bottom:none;{% endif %}">
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:9px 0;">
+      {{ c.merchant_name }} · <span style="color:#6B6560;">{{ c.campaign_name }}</span>
+    </td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;font-weight:600;color:#085041;text-align:right;padding:9px 0;white-space:nowrap;">
+      +{{ c.amount_display }}
+    </td>
+  </tr>
+</table>
+{% endfor %}
+{% endif %}
+
+{% if reversals %}
+<!-- Reversals -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 12px;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:4px;">
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;padding:0 0 10px;">Commissions reversed</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;font-weight:700;color:#E05A3A;text-align:right;padding:0 0 10px;">− {{ reversed_this_week_display }}</td>
+  </tr>
+</table>
+{% for r in reversals %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="border-bottom:1px solid #F0EAE0;{% if forloop.last %}border-bottom:none;{% endif %}">
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:9px 0;">
+      {{ r.merchant_name }} · <span style="color:#6B6560;">{{ r.campaign_name }}</span>
+    </td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;font-weight:600;color:#E05A3A;text-align:right;padding:9px 0;white-space:nowrap;">
+      −{{ r.amount_display }}
+    </td>
+  </tr>
+</table>
+{% endfor %}
+{% endif %}
+
+<!-- Wallet -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 12px;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:11px;font-weight:500;color:#6B6560;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 10px;">Wallet</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr style="border-bottom:1px solid #F0EAE0;">
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:9px 0;">Balance</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;font-weight:600;color:#14110E;text-align:right;padding:9px 0;">{{ wallet_balance_display }}</td>
+  </tr>
+  <tr style="border-bottom:1px solid #F0EAE0;">
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:9px 0;">Payout threshold</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;text-align:right;padding:9px 0;">{{ payout_threshold_display }}</td>
+  </tr>
+  {% if above_threshold %}
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#085041;font-weight:500;padding:9px 0;">✓ You can request a payout</td>
+    <td></td>
+  </tr>
+  {% else %}
+  <tr>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#333333;padding:9px 0;">Remaining to threshold</td>
+    <td style="font-family:'Outfit',Arial,sans-serif;font-size:13px;color:#6B6560;text-align:right;padding:9px 0;">{{ remaining_display }}</td>
+  </tr>
+  {% endif %}
+</table>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
+  <tr><td style="height:1px;background-color:#E8D8C0;font-size:0;line-height:0;">&nbsp;</td></tr>
+</table>
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="border-radius:8px;background-color:#FEAA00;">
+      <a href="{{ earnings_url }}"
+         style="display:inline-block;font-family:'Outfit',Arial,sans-serif;font-size:14px;font-weight:600;color:#14110E;text-decoration:none;padding:13px 28px;border-radius:8px;">
+        View full earnings →
+      </a>
+    </td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block footer_extra %}
+<p style="font-family:'Outfit',Arial,sans-serif;font-size:12px;color:#6B6560;margin:0 0 4px;line-height:1.6;">
+  You receive one digest per week when there is activity. No activity = no email. ·
+  <a href="#" style="color:#DF7B00;text-decoration:none;">Unsubscribe</a>
+</p>
+{% endblock %}

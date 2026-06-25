@@ -6,39 +6,39 @@ from django.db import models
 
 
 class AffiliateLink(models.Model):
-    id                   = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    campaign_affiliate   = models.OneToOneField(
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    campaign_affiliate = models.OneToOneField(
         'campaigns.CampaignAffiliate',
         on_delete=models.RESTRICT,
         related_name='link'
     )
-    campaign             = models.ForeignKey(
+    campaign = models.ForeignKey(
         'campaigns.Campaign',
         on_delete=models.RESTRICT,
         related_name='links'
     )
-    affiliate            = models.ForeignKey(
+    affiliate = models.ForeignKey(
         'accounts.Affiliate',
         on_delete=models.RESTRICT,
         related_name='links'
     )
-    slug                 = models.CharField(max_length=32, unique=True)
-    full_url             = models.CharField(max_length=512)
-    click_count          = models.IntegerField(default=0)
-    created_at           = models.DateTimeField(auto_now_add=True)
+    slug = models.CharField(max_length=32, unique=True)
+    full_url = models.CharField(max_length=512)
+    click_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'affiliate_links'
 
 
 class AffiliateCode(models.Model):
-    id                 = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     campaign_affiliate = models.OneToOneField(
         'campaigns.CampaignAffiliate',
         on_delete=models.RESTRICT,
         related_name='code'
     )
-    campaign           = models.ForeignKey(
+    campaign = models.ForeignKey(
         'campaigns.Campaign',
         on_delete=models.RESTRICT,
         related_name='codes'
@@ -48,40 +48,40 @@ class AffiliateCode(models.Model):
         on_delete=models.RESTRICT,
         related_name='codes'
     )
-    code               = models.CharField(max_length=32, unique=True)
-    is_custom          = models.BooleanField(default=False)
-    use_count          = models.IntegerField(default=0)
-    created_at         = models.DateTimeField(auto_now_add=True)
-    updated_at         = models.DateTimeField(auto_now=True)
+    code = models.CharField(max_length=32, unique=True)
+    is_custom = models.BooleanField(default=False)
+    use_count = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'affiliate_codes'
 
 
 class LinkClick(models.Model):
-    id                  = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    affiliate_link      = models.ForeignKey(
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    affiliate_link = models.ForeignKey(
         AffiliateLink,
         on_delete=models.RESTRICT,
         related_name='clicks'
     )
-    campaign            = models.ForeignKey(
+    campaign = models.ForeignKey(
         'campaigns.Campaign',
         on_delete=models.RESTRICT,
         related_name='clicks'
     )
-    affiliate           = models.ForeignKey(
+    affiliate = models.ForeignKey(
         'accounts.Affiliate',
         on_delete=models.RESTRICT,
         related_name='clicks'
     )
     clicked_at = models.DateTimeField()
-    ip_address          = models.GenericIPAddressField(null=True, blank=True)
-    user_agent          = models.TextField(null=True, blank=True)
-    referrer_url        = models.TextField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    referrer_url = models.TextField(null=True, blank=True)
     session_fingerprint = models.CharField(max_length=128, null=True, blank=True)
-    is_duplicate        = models.BooleanField(default=False)
-    conversion          = models.ForeignKey(
+    is_duplicate = models.BooleanField(default=False)
+    conversion = models.ForeignKey(
         'Conversion', null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name='clicks'
@@ -126,6 +126,10 @@ class Conversion(models.Model):
     merchant_name = models.CharField(max_length=255, null=True, blank=True)
     registration_at = models.DateTimeField()
     is_self_referral = models.BooleanField(default=False)
+    external_event_id = models.CharField(max_length=128, null=True, blank=True, unique=True)
+    payment_id = models.CharField(max_length=128, null=True, blank=True, unique=True)
+    is_flagged = models.BooleanField(default=False)
+    flag_reason = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     converted_at = models.DateTimeField(null=True, blank=True)  # when subscription fired
     lead = models.ForeignKey(
@@ -168,7 +172,6 @@ class Commission(models.Model):
     commission_type_snapshot = models.CharField(max_length=24)
     commission_value_snapshot = models.IntegerField()
     commission_cap_snapshot = models.IntegerField(null=True, blank=True)
-    external_payment_id = models.CharField(max_length=128, null=True, blank=True)
     reversed_commission = models.ForeignKey(
         'self', null=True, blank=True,
         on_delete=models.SET_NULL,
@@ -200,11 +203,13 @@ class CentralWallet(models.Model):
 
 class MerchantLead(models.Model):
     STATUS_CHOICES = [
-        ('trial',      'Trial'),
-        ('signed_up',  'Signed Up'),
-        ('subscribed', 'Subscribed'),
-        ('expired',    'Expired'),
-        ('cancelled',  'Cancelled'),
+        ('signed_up',      'Signed Up'),
+        ('trial',          'Trial'),
+        ('trial_complete', 'Trial Complete'),
+        ('subscribed',     'Subscribed'),
+        ('renewed',        'Renewed'),
+        ('expired',        'Expired'),
+        ('cancelled',      'Cancelled'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -239,6 +244,7 @@ class MerchantLead(models.Model):
     class Meta:
         db_table = 'merchant_leads'
         ordering = ['-signed_up_at']
+
 
 class CentralWalletEvent(models.Model):
     EVENT_TYPES = [

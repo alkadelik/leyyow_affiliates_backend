@@ -55,7 +55,7 @@ class AdminOverviewAnalyticsView(APIView):
         )['total'] or 0
 
         total_leads      = MerchantLead.objects.filter(signed_up_at__gte=since).count()
-        total_subscribed = MerchantLead.objects.filter(signed_up_at__gte=since, status='subscribed').count()
+        total_subscribed = MerchantLead.objects.filter(signed_up_at__gte=since, status__in=['subscribed', 'renewed']).count()
         conversion_rate = (
             round(total_subscribed / total_leads * 100, 2)
             if total_leads > 0 else 0
@@ -185,11 +185,11 @@ class AdminCampaignAnalyticsView(APIView):
         total_leads = MerchantLead.objects.filter(campaign=campaign).count()
 
         total_subscribed = MerchantLead.objects.filter(
-            campaign=campaign, status='subscribed'
+            campaign=campaign, status__in=['subscribed', 'renewed']
         ).count()
 
         total_sales = MerchantLead.objects.filter(
-            campaign=campaign, status='subscribed'
+            campaign=campaign, status__in=['subscribed', 'renewed']
         ).aggregate(total=db_models.Sum('amount_paid_kobo'))['total'] or 0
 
         total_commissions = Commission.objects.filter(
@@ -225,11 +225,11 @@ class AdminCampaignAnalyticsView(APIView):
             ).count()
 
             aff_conversions = MerchantLead.objects.filter(
-                campaign=campaign, affiliate=aff, status='subscribed'
+                campaign=campaign, affiliate=aff, status__in=['subscribed', 'renewed']
             ).count()
 
             aff_sales = MerchantLead.objects.filter(
-                campaign=campaign, affiliate=aff, status='subscribed'
+                campaign=campaign, affiliate=aff, status__in=['subscribed', 'renewed']
             ).aggregate(total=db_models.Sum('amount_paid_kobo'))['total'] or 0
 
             aff_earned = Commission.objects.filter(
@@ -460,11 +460,11 @@ class AdminAffiliateAnalyticsView(APIView):
         total_leads = MerchantLead.objects.filter(affiliate=affiliate).count()
 
         total_conversions = MerchantLead.objects.filter(
-            affiliate=affiliate, status='subscribed'
+            affiliate=affiliate, status__in=['subscribed', 'renewed']
         ).count()
 
         total_sales = MerchantLead.objects.filter(
-            affiliate=affiliate, status='subscribed'
+            affiliate=affiliate, status__in=['subscribed', 'renewed']
         ).aggregate(total=db_models.Sum('amount_paid_kobo'))['total'] or 0
 
         conversion_rate = (
