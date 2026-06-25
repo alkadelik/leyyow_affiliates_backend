@@ -3,6 +3,42 @@ from accounts.models import Affiliate
 from rest_framework import serializers
 
 
+class MerchantOfferSerializer(serializers.Serializer):
+    applicable_to                   = serializers.ChoiceField(choices=['trial', 'subscription'])
+    type                            = serializers.ChoiceField(choices=['extension', 'discount'])
+    extension_days                  = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    discount_subtype                = serializers.ChoiceField(choices=['amount', 'percentage'], required=False, allow_null=True)
+    discount_value                  = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    discount_recurrence             = serializers.ChoiceField(choices=['once', 'n_times', 'forever'], required=False, allow_null=True)
+    discount_recurrence_count       = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    has_lifetime_condition          = serializers.BooleanField(default=False)
+    condition_type                  = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    condition_threshold             = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    merchant_redemption_window_days = serializers.IntegerField(min_value=1)
+    offer_valid_from                = serializers.DateTimeField()
+    offer_valid_until               = serializers.DateTimeField(required=False, allow_null=True)
+
+    def validate(self, data):
+        if data.get('type') == 'extension':
+            if not data.get('extension_days'):
+                raise serializers.ValidationError({'extension_days': 'Required for extension offers.'})
+        elif data.get('type') == 'discount':
+            if not data.get('discount_subtype'):
+                raise serializers.ValidationError({'discount_subtype': 'Required for discount offers.'})
+            if not data.get('discount_value'):
+                raise serializers.ValidationError({'discount_value': 'Required for discount offers.'})
+            if not data.get('discount_recurrence'):
+                raise serializers.ValidationError({'discount_recurrence': 'Required for discount offers.'})
+            if data.get('discount_recurrence') == 'n_times' and not data.get('discount_recurrence_count'):
+                raise serializers.ValidationError({'discount_recurrence_count': 'Required when recurrence is n_times.'})
+        if data.get('has_lifetime_condition'):
+            if not data.get('condition_type'):
+                raise serializers.ValidationError({'condition_type': 'Required when has_lifetime_condition is true.'})
+            if not data.get('condition_threshold'):
+                raise serializers.ValidationError({'condition_threshold': 'Required when has_lifetime_condition is true.'})
+        return data
+
+
 COMMISSION_TRIGGER_CHOICES = [
     ('first_subscription_only',     'First Subscription Only'),
     ('all_subscriptions',           'All Subscriptions'),
@@ -41,6 +77,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
 class CampaignDetailSerializer(serializers.ModelSerializer):
     affiliates      = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
+    offer           = serializers.SerializerMethodField()
 
     class Meta:
         model  = Campaign
@@ -51,7 +88,7 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
             'starts_at', 'ends_at', 'conversion_limit',
             'commission_trigger', 'commission_period_days', 'commission_per_tier',
             'terms_and_conditions', 'ended_at', 'cancelled_at',
-            'created_by_name', 'created_at', 'updated_at', 'affiliates',
+            'created_by_name', 'created_at', 'updated_at', 'affiliates', 'offer',
         ]
 
     def get_affiliates(self, obj):
@@ -71,6 +108,27 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
 
     def get_created_by_name(self, obj):
         return obj.created_by.full_name
+
+    def get_offer(self, obj):
+        offer = obj.offers.first()
+        if not offer:
+            return None
+        return {
+            'id':                              str(offer.id),
+            'applicable_to':                   offer.applicable_to,
+            'type':                            offer.type,
+            'extension_days':                  offer.extension_days,
+            'discount_subtype':                offer.discount_subtype,
+            'discount_value':                  offer.discount_value,
+            'discount_recurrence':             offer.discount_recurrence,
+            'discount_recurrence_count':       offer.discount_recurrence_count,
+            'has_lifetime_condition':          offer.has_lifetime_condition,
+            'condition_type':                  offer.condition_type,
+            'condition_threshold':             offer.condition_threshold,
+            'merchant_redemption_window_days': offer.merchant_redemption_window_days,
+            'offer_valid_from':                offer.offer_valid_from,
+            'offer_valid_until':               offer.offer_valid_until,
+        }
 
 
 class CreateCampaignSerializer(serializers.Serializer):
@@ -95,6 +153,7 @@ class CreateCampaignSerializer(serializers.Serializer):
     )
     commission_period_days = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     commission_per_tier    = serializers.JSONField(required=False, allow_null=True)
+    offer                  = MerchantOfferSerializer(required=False, allow_null=True)
 
     def validate(self, data):
         is_draft      = self.context.get('is_draft', False)

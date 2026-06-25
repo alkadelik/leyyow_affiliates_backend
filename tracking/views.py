@@ -394,6 +394,33 @@ class MerchantLeadDetailView(APIView):
             for c in commissions
         ]
 
+        offer_redemption = None
+        try:
+            r = lead.offer_redemption
+            offer = r.offer
+            offer_redemption = {
+                'status':        r.status,
+                'times_applied': r.times_applied,
+                'expires_at':    r.expires_at,
+                'forfeited_at':  r.forfeited_at,
+                'exhausted_at':  r.exhausted_at,
+                'offer': {
+                    'applicable_to':                   offer.applicable_to,
+                    'type':                            offer.type,
+                    'extension_days':                  offer.extension_days,
+                    'discount_subtype':                offer.discount_subtype,
+                    'discount_value':                  offer.discount_value,
+                    'discount_recurrence':             offer.discount_recurrence,
+                    'discount_recurrence_count':       offer.discount_recurrence_count,
+                    'has_lifetime_condition':          offer.has_lifetime_condition,
+                    'condition_type':                  offer.condition_type,
+                    'condition_threshold':             offer.condition_threshold,
+                    'merchant_redemption_window_days': offer.merchant_redemption_window_days,
+                },
+            }
+        except Exception:
+            pass
+
         return Response({
             'id':                      str(lead.id),
             'merchant_id':             lead.merchant_id,
@@ -414,4 +441,5 @@ class MerchantLeadDetailView(APIView):
             'signed_up_at':            lead.signed_up_at,
             'updated_at':              lead.updated_at,
             'commissions':             commission_rows,
+            'offer_redemption':        offer_redemption,
         })

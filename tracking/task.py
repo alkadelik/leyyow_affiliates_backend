@@ -84,6 +84,13 @@ def task_confirm_payment(self, conversion_id):
 
         credit_central_wallet(commission)
 
+        if conversion.lead_id:
+            from tracking.models import MerchantLead as _Lead
+            lead = _Lead.objects.select_for_update().get(id=conversion.lead_id)
+            lead.amount_paid_kobo       = confirmed_kobo
+            lead.total_amount_paid_kobo = (lead.total_amount_paid_kobo or 0) + confirmed_kobo
+            lead.save(update_fields=['amount_paid_kobo', 'total_amount_paid_kobo', 'updated_at'])
+
 
 def _flag_conversion(conversion, reason):
     conversion.is_flagged = True

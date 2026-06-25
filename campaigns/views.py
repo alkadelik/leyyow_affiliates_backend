@@ -8,7 +8,7 @@ from rest_framework import status
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from campaigns.models import Campaign, CampaignAffiliate
+from campaigns.models import Campaign, CampaignAffiliate, MerchantOffer
 from campaigns.serializers import (
     CampaignListSerializer,
     CampaignDetailSerializer,
@@ -79,8 +79,9 @@ class CampaignListView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        data     = serializer.validated_data
-        campaign = Campaign.objects.create(
+        data       = serializer.validated_data
+        offer_data = data.pop('offer', None)
+        campaign   = Campaign.objects.create(
             name                   = data['name'],
             description            = data.get('description'),
             campaign_type          = data.get('campaign_type', 'fixed'),
@@ -99,6 +100,9 @@ class CampaignListView(APIView):
             status                 = 'draft',
             created_by             = request.user,
         )
+
+        if offer_data:
+            MerchantOffer.objects.create(campaign=campaign, **offer_data)
 
         affiliate_ids = request.data.get('affiliate_ids', [])
         for affiliate_id in affiliate_ids:
@@ -175,10 +179,24 @@ class CampaignDetailView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        data = serializer.validated_data
+        data       = serializer.validated_data
+        offer_data = data.pop('offer', ...)   # sentinel: ... means key absent from payload
+
         for field, value in data.items():
             setattr(campaign, field, value)
         campaign.save()
+
+        if offer_data is not ...:
+            existing = campaign.offers.first()
+            if offer_data is None:
+                if existing:
+                    existing.delete()
+            elif existing:
+                for field, value in offer_data.items():
+                    setattr(existing, field, value)
+                existing.save()
+            else:
+                MerchantOffer.objects.create(campaign=campaign, **offer_data)
 
         log_action(
             actor_type='admin', actor_id=request.user.id,

@@ -97,3 +97,45 @@ class CampaignAffiliate(models.Model):
     class Meta:
         db_table = 'campaign_affiliates'
         unique_together = [('campaign', 'affiliate')]
+
+
+class MerchantOffer(models.Model):
+    APPLICABLE_TO_CHOICES = [
+        ('trial',        'Trial'),
+        ('subscription', 'Subscription'),
+    ]
+    TYPE_CHOICES = [
+        ('extension', 'Extension'),
+        ('discount',  'Discount'),
+    ]
+    DISCOUNT_SUBTYPE_CHOICES = [
+        ('amount',     'Amount'),
+        ('percentage', 'Percentage'),
+    ]
+    RECURRENCE_CHOICES = [
+        ('once',    'Once'),
+        ('n_times', 'N Times'),
+        ('forever', 'Forever'),
+    ]
+
+    id                              = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    campaign                        = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='offers')
+    applicable_to                   = models.CharField(max_length=16, choices=APPLICABLE_TO_CHOICES)
+    type                            = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    extension_days                  = models.IntegerField(null=True, blank=True)
+    discount_subtype                = models.CharField(max_length=16, choices=DISCOUNT_SUBTYPE_CHOICES, null=True, blank=True)
+    discount_value                  = models.IntegerField(null=True, blank=True)
+    discount_recurrence             = models.CharField(max_length=16, choices=RECURRENCE_CHOICES, null=True, blank=True)
+    discount_recurrence_count       = models.IntegerField(null=True, blank=True)
+    has_lifetime_condition          = models.BooleanField(default=False)
+    condition_type                  = models.CharField(max_length=32, null=True, blank=True)
+    condition_threshold             = models.IntegerField(null=True, blank=True)
+    merchant_redemption_window_days = models.IntegerField()
+    offer_valid_from                = models.DateTimeField()
+    offer_valid_until               = models.DateTimeField(null=True, blank=True)
+    created_at                      = models.DateTimeField(auto_now_add=True)
+    updated_at                      = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'merchant_offers'
+        ordering = ['-created_at']

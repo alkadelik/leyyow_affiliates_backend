@@ -246,6 +246,30 @@ class MerchantLead(models.Model):
         ordering = ['-signed_up_at']
 
 
+class MerchantOfferRedemption(models.Model):
+    STATUS_CHOICES = [
+        ('active',    'Active'),
+        ('ongoing',   'Ongoing'),
+        ('exhausted', 'Exhausted'),
+        ('expired',   'Expired'),
+        ('forfeited', 'Forfeited'),
+    ]
+
+    id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    offer         = models.ForeignKey('campaigns.MerchantOffer', on_delete=models.PROTECT, related_name='redemptions')
+    merchant_lead = models.OneToOneField(MerchantLead, on_delete=models.PROTECT, related_name='offer_redemption')
+    status        = models.CharField(max_length=16, choices=STATUS_CHOICES, default='active')
+    times_applied = models.IntegerField(default=0)
+    expires_at    = models.DateTimeField()
+    forfeited_at  = models.DateTimeField(null=True, blank=True)
+    exhausted_at  = models.DateTimeField(null=True, blank=True)
+    created_at    = models.DateTimeField(auto_now_add=True)
+    updated_at    = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'merchant_offer_redemptions'
+
+
 class CentralWalletEvent(models.Model):
     EVENT_TYPES = [
         ('credit',   'Commission Credit'),

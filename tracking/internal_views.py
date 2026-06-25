@@ -1,5 +1,6 @@
 import hmac
 from django.conf import settings
+from django.db.models import Q
 from django.utils import timezone
 from django.db import transaction
 from datetime import timedelta
@@ -7,7 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import AffiliateCode, MerchantLead, Conversion, Commission, CentralWallet
+from .models import AffiliateCode, MerchantLead, MerchantOfferRedemption, Conversion, Commission, CentralWallet
 from accounts.models import AffiliateWallet, SystemSettings
 from audit.utils import log_action
 from tracking.commission import _check_eligibility, reverse_commission
@@ -60,6 +61,33 @@ class MerchantSignupView(APIView):
             signed_up_at=signed_up_at,
         )
 
+        offer_payload = None
+        active_offer = campaign.offers.filter(
+            Q(offer_valid_until__isnull=True) | Q(offer_valid_until__gte=timezone.now())
+        ).filter(offer_valid_from__lte=timezone.now()).first()
+
+        if active_offer:
+            redemption = MerchantOfferRedemption.objects.create(
+                offer=active_offer,
+                merchant_lead=lead,
+                status='active',
+                times_applied=0,
+                expires_at=lead.signed_up_at + timedelta(days=active_offer.merchant_redemption_window_days),
+            )
+            offer_payload = {
+                'applicable_to':                   active_offer.applicable_to,
+                'type':                            active_offer.type,
+                'extension_days':                  active_offer.extension_days,
+                'discount_subtype':                active_offer.discount_subtype,
+                'discount_value':                  active_offer.discount_value,
+                'discount_recurrence':             active_offer.discount_recurrence,
+                'discount_recurrence_count':       active_offer.discount_recurrence_count,
+                'has_lifetime_condition':          active_offer.has_lifetime_condition,
+                'condition_type':                  active_offer.condition_type,
+                'condition_threshold':             active_offer.condition_threshold,
+                'redemption_expires_at':           redemption.expires_at,
+            }
+
         log_action(
             actor_type='system',
             action='merchant_signup',
@@ -68,7 +96,7 @@ class MerchantSignupView(APIView):
             metadata={'merchant_id': merchant_id, 'affiliate_code': code_str}
         )
 
-        return Response({'lead_id': str(lead.id)}, status=status.HTTP_201_CREATED)
+        return Response({'lead_id': str(lead.id), 'offer': offer_payload}, status=status.HTTP_201_CREATED)
 
 
 class MerchantSubscriptionView(APIView):
@@ -84,11 +112,12 @@ class MerchantSubscriptionView(APIView):
         subscription_tier        = request.data.get('subscription_tier')
         subscription_start       = request.data.get('subscription_start')
         subscription_end         = request.data.get('subscription_end')
-        amount_paid_kobo         = request.data.get('amount_paid_kobo')
         merchant_subscription_id = request.data.get('merchant_subscription_id')
         occurred_at              = request.data.get('occurred_at', timezone.now())
         event_id                 = request.data.get('event_id')
         payment_id               = request.data.get('payment_id')
+        offer_status             = request.data.get('offer_status')
+        offer_times_applied      = request.data.get('offer_times_applied')
 
         if not all([merchant_id, event_type, occurred_at, event_id]):
             return Response({'error': 'merchant_id, event_type, occurred_at and event_id are required'},
@@ -100,6 +129,10 @@ class MerchantSubscriptionView(APIView):
 
         if event_type not in ('trial_started', 'trial_ended', 'subscribed', 'renewed', 'expired', 'cancelled'):
             return Response({'error': 'Invalid event_type'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if offer_times_applied is not None and offer_status is None:
+            return Response({'error': 'offer_times_applied requires offer_status to be present'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Deduplication: if we've already processed this event_id, return early
         if Conversion.objects.filter(external_event_id=event_id).exists():
@@ -120,10 +153,6 @@ class MerchantSubscriptionView(APIView):
             lead.subscription_tier  = subscription_tier or lead.subscription_tier
             lead.subscription_start = subscription_start or lead.subscription_start
             lead.subscription_end   = subscription_end or lead.subscription_end
-            lead.amount_paid_kobo   = amount_paid_kobo or lead.amount_paid_kobo
-
-            if event_type in ('subscribed', 'renewed') and amount_paid_kobo:
-                lead.total_amount_paid_kobo += amount_paid_kobo
 
             if event_type in ('subscribed', 'renewed') and lead.first_subscribed_at is None:
                 lead.first_subscribed_at     = occurred_at
@@ -134,8 +163,24 @@ class MerchantSubscriptionView(APIView):
             commission_created  = False
             commission_reversed = False
 
+            if offer_status is not None or offer_times_applied is not None:
+                try:
+                    redemption = lead.offer_redemption
+                    VALID_STATUSES = {'active', 'ongoing', 'exhausted', 'expired', 'forfeited'}
+                    if offer_status is not None and offer_status in VALID_STATUSES:
+                        redemption.status = offer_status
+                        if offer_status == 'forfeited':
+                            redemption.forfeited_at = occurred_at
+                        elif offer_status == 'exhausted':
+                            redemption.exhausted_at = occurred_at
+                    if offer_times_applied is not None:
+                        redemption.times_applied = offer_times_applied
+                    redemption.save()
+                except MerchantOfferRedemption.DoesNotExist:
+                    pass
+
             if event_type in ('subscribed', 'renewed'):
-                eligible, amount, snapshot = _check_eligibility(lead, occurred_at, amount_paid_kobo)
+                eligible, amount, snapshot = _check_eligibility(lead, occurred_at, None)
 
                 if eligible:
                     conversion = Conversion.objects.create(
@@ -162,7 +207,7 @@ class MerchantSubscriptionView(APIView):
                         campaign=campaign,
                         status='pending',
                         amount=amount,
-                        payment_amount=amount_paid_kobo or 0,
+                        payment_amount=0,
                         commission_type_snapshot=snapshot.get('commission_type_snapshot') or campaign.commission_type,
                         commission_value_snapshot=snapshot.get('commission_value_snapshot') or campaign.commission_value,
                         commission_cap_snapshot=snapshot.get('commission_cap_snapshot') or campaign.commission_cap,
